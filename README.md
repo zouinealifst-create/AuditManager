@@ -16,5 +16,5 @@ Plateforme de gestion des audits sociaux et environnementaux.
 ## Stack technique
 
 - Frontend : React.js
-- Backend : Spring Boot / Laravel
+- Backend :  Laravel
 - Base de données : MySQL
