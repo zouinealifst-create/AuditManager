@@ -1,0 +1,28 @@
+# === Backend (Laravel) ===
+/Backend/vendor/
+/Backend/node_modules/
+/Backend/.env
+/Backend/.env.backup
+/Backend/.phpunit.result.cache
+/Backend/storage/*.key
+/Backend/storage/framework/cache/*
+/Backend/storage/framework/sessions/*
+/Backend/storage/framework/views/*
+/Backend/storage/logs/*
+/Backend/bootstrap/cache/*.php
+/Backend/public/hot
+/Backend/public/storage
+/Backend/.idea
+/Backend/.vscode
+
+# === Frontend (React + Vite) ===
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.env
+/frontend/.env.local
+/frontend/.vite/
+
+# === Système ===
+.DS_Store
+Thumbs.db
+*.log
