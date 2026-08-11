@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\NormeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EntrepriseController;
@@ -13,3 +14,6 @@ Route::get('/test', function () {
 });
 
 Route::apiResource('entreprises', EntrepriseController::class);
+
+// Routes CRUD pour les Normes
+Route::apiResource('normes', NormeController::class);
