@@ -14,6 +14,3 @@ Route::get('/test', function () {
 });
 
 Route::apiResource('entreprises', EntrepriseController::class);
-
-// Routes CRUD pour les Normes
-Route::apiResource('normes', NormeController::class);
