@@ -10,12 +10,16 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::create('departements', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
-    }
+{
+    Schema::create('departements', function (Blueprint $table) {
+        $table->id();
+        $table->foreignId('entreprise_id')->constrained('entreprises')->cascadeOnDelete();
+        $table->string('nom');
+        $table->text('description')->nullable();
+        $table->unsignedBigInteger('responsable_id')->nullable();
+        $table->timestamps();
+    });
+}
 
     /**
      * Reverse the migrations.
