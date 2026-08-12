@@ -6,22 +6,32 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('non_conformites', function (Blueprint $table) {
             $table->id();
+
+            $table->foreignId('reponse_id')->constrained('reponses')->onDelete('cascade');
+            $table->foreignId('responsable_id')->nullable()->constrained('users')->onDelete('set null');
+
+            $table->text('description');
+            $table->enum('gravite', ['mineure', 'majeure', 'critique']);
+            $table->enum('statut', ['ouverte', 'en_cours', 'resolue', 'validee'])->default('ouverte');
+
+            $table->date('date_detection');
+            $table->date('date_limite')->nullable();
+
+            // Champs de résolution (remplis par le responsable une fois traité)
+            $table->text('commentaire_resolution')->nullable();
+            $table->string('justificatif')->nullable();
+            $table->date('date_resolution')->nullable();
+
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('non_conformites');
     }
-};
+}; 
