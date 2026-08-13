@@ -5,15 +5,23 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\normes\Norme;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class NormesSeeder extends Seeder
 {
     /**
      * Seed la table normes depuis database/data/normes.csv
-     * Utilise updateOrCreate pour eviter les doublons.
-     * Peut etre execute plusieurs fois sans risque.
+     *
+     * Utilise des upserts par lots (CHUNK_SIZE lignes) pour etre rapide
+     * meme avec 38 000+ normes.
+     *
+     * Apres l'import des normes, synchronise la table pivot norme_secteur :
+     * - Cree les secteurs manquants dans la table secteurs.
+     * - Insere dans norme_secteur sans jamais supprimer les liens existants.
      */
+    private const CHUNK_SIZE = 500;
+
     public function run(): void
     {
         $csvPath = database_path('data/normes.csv');
@@ -51,15 +59,16 @@ class NormesSeeder extends Seeder
             }
         }
 
-        $imported = 0;
+        $now      = Carbon::now();
+        $chunk    = [];
+        $total    = 0;
         $skipped  = 0;
-        $errors   = 0;
-        $line     = 1;
+        $seenCodes = [];
+
+        // -- PASSE 1 : upsert des normes par lots --
+        $this->command->info("Import des normes en cours...");
 
         while (($row = fgetcsv($handle, 0, ',')) !== false) {
-            $line++;
-
-            // Ligne incomplete
             if (count($row) < count($headers)) {
                 $skipped++;
                 continue;
@@ -68,51 +77,115 @@ class NormesSeeder extends Seeder
             $data = array_combine($headers, $row);
             $code = trim($data['code'] ?? '');
 
-            // Ignore les lignes sans code (cle unique)
-            if (empty($code)) {
+            if (empty($code) || isset($seenCodes[$code])) {
                 $skipped++;
                 continue;
             }
+            $seenCodes[$code] = true;
 
-            $nom         = mb_substr(trim($data['nom']         ?? ''), 0, 300);
-            $description = mb_substr(trim($data['description'] ?? ''), 0, 500);
-            $version     = mb_substr(trim($data['version']     ?? ''), 0, 50);
-            $organisme   = mb_substr(trim($data['organisme']   ?? ''), 0, 100);
-            $secteur     = mb_substr(trim($data['secteur']     ?? ''), 0, 100);
-            $statut      = trim($data['statut'] ?? 'actif');
-
+            $statut = trim($data['statut'] ?? 'actif');
             if (!in_array($statut, ['actif', 'inactif'])) {
                 $statut = 'actif';
             }
 
-            try {
-                Norme::updateOrCreate(
-                    ['code' => $code],
-                    [
-                        'nom'         => $nom,
-                        'description' => $description,
-                        'version'     => $version,
-                        'organisme'   => $organisme,
-                        'secteur'     => $secteur,
-                        'statut'      => $statut,
-                    ]
+            $chunk[] = [
+                'code'        => $code,
+                'nom'         => mb_substr(trim($data['nom']         ?? ''), 0, 300),
+                'description' => mb_substr(trim($data['description'] ?? ''), 0, 500),
+                'version'     => mb_substr(trim($data['version']     ?? ''), 0, 50),
+                'organisme'   => mb_substr(trim($data['organisme']   ?? ''), 0, 100),
+                'secteur'     => mb_substr(trim($data['secteur']     ?? ''), 0, 100),
+                'statut'      => $statut,
+                'created_at'  => $now,
+                'updated_at'  => $now,
+            ];
+            $total++;
+
+            if (count($chunk) >= self::CHUNK_SIZE) {
+                DB::table('normes')->upsert(
+                    $chunk,
+                    ['code'],
+                    ['nom', 'description', 'version', 'organisme', 'secteur', 'statut', 'updated_at']
                 );
-                $imported++;
-            } catch (\Exception $e) {
-                $this->command->warn("Ligne " . $line . " ignoree : " . $e->getMessage());
-                $errors++;
+                $this->command->info("  -> " . $total . " normes traitees...");
+                $chunk = [];
             }
         }
 
+        // Flush du dernier lot
+        if (!empty($chunk)) {
+            DB::table('normes')->upsert(
+                $chunk,
+                ['code'],
+                ['nom', 'description', 'version', 'organisme', 'secteur', 'statut', 'updated_at']
+            );
+        }
+
         fclose($handle);
+
+        $this->command->info("  -> " . $total . " normes traitees (termine).");
+
+        // -- PASSE 2 : synchronisation de la table pivot norme_secteur --
+        $this->command->info("Synchronisation du pivot norme_secteur...");
+
+        // Charger les normes avec leur secteur (colonne legacy)
+        $normes = DB::table('normes')
+            ->whereNotNull('secteur')
+            ->where('secteur', '!=', '')
+            ->select('id', 'secteur')
+            ->get();
+
+        // Creer/recuperer tous les secteurs uniques
+        $secteursUniques = $normes->pluck('secteur')->unique()->filter()->values();
+        $secteurMap = [];
+
+        foreach ($secteursUniques as $nomSecteur) {
+            DB::table('secteurs')->insertOrIgnore([
+                'nom'        => $nomSecteur,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+            $id = DB::table('secteurs')->where('nom', $nomSecteur)->value('id');
+            $secteurMap[$nomSecteur] = $id;
+        }
+
+        $this->command->info("  -> " . count($secteurMap) . " secteurs dans la table.");
+
+        // Inserer dans norme_secteur par lots (ignore les doublons)
+        $pivotChunk = [];
+        $pivotTotal = 0;
+
+        foreach ($normes as $norme) {
+            $secteurId = $secteurMap[$norme->secteur] ?? null;
+            if (!$secteurId) {
+                continue;
+            }
+            $pivotChunk[] = [
+                'norme_id'   => $norme->id,
+                'secteur_id' => $secteurId,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+            $pivotTotal++;
+
+            if (count($pivotChunk) >= self::CHUNK_SIZE) {
+                DB::table('norme_secteur')->insertOrIgnore($pivotChunk);
+                $pivotChunk = [];
+            }
+        }
+
+        if (!empty($pivotChunk)) {
+            DB::table('norme_secteur')->insertOrIgnore($pivotChunk);
+        }
 
         $this->command->newLine();
         $this->command->info("╔══════════════════════════════════════════╗");
         $this->command->info("║      IMPORT NORMES — RESUME              ║");
         $this->command->info("╠══════════════════════════════════════════╣");
-        $this->command->info("║  Importees / mises a jour : " . str_pad((string)$imported, 13) . " ║");
-        $this->command->info("║  Lignes ignorees          : " . str_pad((string)$skipped,  13) . " ║");
-        $this->command->info("║  Erreurs                  : " . str_pad((string)$errors,   13) . " ║");
+        $this->command->info("║  Normes importees / mises a jour : " . str_pad((string)$total,   6) . " ║");
+        $this->command->info("║  Lignes ignorees                 : " . str_pad((string)$skipped, 6) . " ║");
+        $this->command->info("║  Secteurs crees                  : " . str_pad((string)count($secteurMap), 6) . " ║");
+        $this->command->info("║  Liens norme_secteur             : " . str_pad((string)$pivotTotal, 6) . " ║");
         $this->command->info("╚══════════════════════════════════════════╝");
         $this->command->newLine();
     }
