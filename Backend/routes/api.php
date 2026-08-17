@@ -7,6 +7,8 @@ use App\Http\Controllers\QuestionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EntrepriseController;
+use App\Http\Controllers\AuthController;
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -35,4 +37,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('audits/{id}/affecter-departement',[AuditController::class, 'affecterDepartement']);
     Route::patch('audits/{id}/demarrer',            [AuditController::class, 'demarrer']);
     Route::patch('audits/{id}/cloturer',            [AuditController::class, 'cloturer']);
+});
+
+// Auth Routes 
+Route::post('login', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('logout', [AuthController::class, 'logout']);
+    Route::get('me', [AuthController::class, 'me']);
 });
