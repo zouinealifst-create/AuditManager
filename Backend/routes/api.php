@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EntrepriseController;
 use App\Http\Controllers\ReponseController;
 use App\Http\Controllers\NonConformiteController;
+use App\Http\Controllers\AuthController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -38,9 +39,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('checklists.questions', QuestionController::class)->shallow();
 
     Route::apiResource('audits', AuditController::class);
-    Route::patch('audits/{id}/planifier', [AuditController::class, 'planifier']);
-    Route::patch('audits/{id}/affecter-auditeur', [AuditController::class, 'affecterAuditeur']);
-    Route::patch('audits/{id}/affecter-departement', [AuditController::class, 'affecterDepartement']);
-    Route::patch('audits/{id}/demarrer', [AuditController::class, 'demarrer']);
-    Route::patch('audits/{id}/cloturer', [AuditController::class, 'cloturer']);
+    Route::patch('audits/{id}/planifier',              [AuditController::class, 'planifier']);
+    Route::patch('audits/{id}/affecter-auditeur',       [AuditController::class, 'affecterAuditeur']);
+    Route::patch('audits/{id}/affecter-departement',    [AuditController::class, 'affecterDepartement']);
+    Route::patch('audits/{id}/demarrer',                [AuditController::class, 'demarrer']);
+    Route::patch('audits/{id}/cloturer',                [AuditController::class, 'cloturer']);
+});
+
+// Auth Routes
+Route::post('login', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('logout', [AuthController::class, 'logout']);
+    Route::get('me', [AuthController::class, 'me']);
 });
