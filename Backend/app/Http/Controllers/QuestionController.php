@@ -29,12 +29,9 @@ class QuestionController extends Controller
      */
     public function store(Request $request, int $checklistId): JsonResponse
     {
-        // Vérification temporaire du rôle en ligne.
-        // À remplacer par un middleware dédié lorsque Dev 1 livrera le système de permissions.
-        $forbidden = $this->checkRole($request);
-        if ($forbidden) {
-            return $forbidden;
-        }
+        // TODO : réactiver quand le système de login sera branché au frontend
+        // $forbidden = $this->checkRole($request);
+        // if ($forbidden) { return $forbidden; }
 
         $checklist = Checklist::find($checklistId);
 
@@ -92,12 +89,9 @@ class QuestionController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
-        // Vérification temporaire du rôle en ligne.
-        // À remplacer par un middleware dédié lorsque Dev 1 livrera le système de permissions.
-        $forbidden = $this->checkRole($request);
-        if ($forbidden) {
-            return $forbidden;
-        }
+        // TODO : réactiver quand le système de login sera branché au frontend
+        // $forbidden = $this->checkRole($request);
+        // if ($forbidden) { return $forbidden; }
 
         $question = Question::find($id);
 
@@ -127,12 +121,9 @@ class QuestionController extends Controller
      */
     public function destroy(Request $request, int $id): JsonResponse
     {
-        // Vérification temporaire du rôle en ligne.
-        // À remplacer par un middleware dédié lorsque Dev 1 livrera le système de permissions.
-        $forbidden = $this->checkRole($request);
-        if ($forbidden) {
-            return $forbidden;
-        }
+        // TODO : réactiver quand le système de login sera branché au frontend
+        // $forbidden = $this->checkRole($request);
+        // if ($forbidden) { return $forbidden; }
 
         $question = Question::find($id);
 

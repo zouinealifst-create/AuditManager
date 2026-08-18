@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Checklist;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 
 class ChecklistController extends Controller
 {
@@ -14,8 +15,13 @@ class ChecklistController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Checklist::with(['norme:id,code,nom', 'createur:id,name'])
-            ->withCount('questions');
+        $query = Checklist::with([
+            'norme:id,code,nom', 
+            'createur:id,name',
+            'questions' => function ($q) {
+                $q->orderBy('ordre');
+            }
+        ])->where('cree_par', $request->user()?->id ?? 1); // Fallback 1 sans auth
 
         if ($request->filled('norme_id')) {
             $query->where('norme_id', $request->input('norme_id'));
@@ -34,12 +40,9 @@ class ChecklistController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        // Vérification temporaire du rôle en ligne.
-        // À remplacer par un middleware dédié lorsque Dev 1 livrera le système de permissions.
-        $forbidden = $this->checkRole($request);
-        if ($forbidden) {
-            return $forbidden;
-        }
+        // TODO : réactiver quand le système de login sera branché au frontend
+        // $forbidden = $this->checkRole($request);
+        // if ($forbidden) { return $forbidden; }
 
         $validated = $request->validate([
             'norme_id'      => 'required|integer|exists:normes,id',
@@ -48,7 +51,7 @@ class ChecklistController extends Controller
             'statut'        => 'nullable|in:brouillon,actif,archive',
         ]);
 
-        $validated['cree_par'] = $request->user()->id;
+        $validated['cree_par'] = $request->user()?->id ?? 1; // fallback user=1 en mode dev sans auth
 
         if (! isset($validated['statut'])) {
             $validated['statut'] = 'brouillon';
@@ -144,7 +147,18 @@ class ChecklistController extends Controller
             ], 404);
         }
 
-        $checklist->delete();
+        try {
+            $checklist->delete();
+        } catch (QueryException $e) {
+            // Code 23000 = violation de contrainte d'intégrité
+            if ($e->getCode() === '23000') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Impossible de supprimer : cette checklist est utilisée par au moins un audit.',
+                ], 409);
+            }
+            throw $e;
+        }
 
         return response()->json([
             'success' => true,

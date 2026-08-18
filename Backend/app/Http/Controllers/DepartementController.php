@@ -10,7 +10,7 @@ class DepartementController extends Controller
 {
     public function index()
     {
-        $departements = Departement::with(['entreprise', 'responsable'])
+        $departements = Departement::with(['entreprise', 'responsable', 'secteur'])
             ->withCount('users')
             ->latest()
             ->paginate(10);

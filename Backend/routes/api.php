@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\ChecklistController;
+use App\Http\Controllers\DepartementController;
 use App\Http\Controllers\NormeController;
 use App\Http\Controllers\QuestionController;
 use Illuminate\Http\Request;
@@ -20,17 +21,22 @@ Route::get('/test', function () {
 
 Route::apiResource('entreprises', EntrepriseController::class);
 
+// Routes CRUD pour les Départements
+Route::apiResource('departements', DepartementController::class);
+
 // Routes CRUD pour les Normes
 Route::apiResource('normes', NormeController::class);
 
 // Synchroniser les secteurs (et normes actives dérivées) d'une entreprise
 Route::post('entreprises/{entrepriseId}/secteurs', [EntrepriseController::class, 'syncSecteurs']);
 
-// ── Checklists, Questions & Audits (protégés par auth:sanctum) ───────
-Route::middleware('auth:sanctum')->group(function () {
-    Route::apiResource('checklists', ChecklistController::class);
-    Route::apiResource('checklists.questions', QuestionController::class)->shallow();
+// ── Checklists & Questions (sans auth pour les tests dev) ────────────
+// TODO : remettre auth:sanctum quand le système de login sera branché au frontend
+Route::apiResource('checklists', ChecklistController::class);
+Route::apiResource('checklists.questions', QuestionController::class)->shallow();
 
+// ── Audits (protégés par auth:sanctum) ───────────────────────────────
+Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('audits', AuditController::class);
     Route::patch('audits/{id}/planifier',           [AuditController::class, 'planifier']);
     Route::patch('audits/{id}/affecter-auditeur',   [AuditController::class, 'affecterAuditeur']);

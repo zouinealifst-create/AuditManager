@@ -7,6 +7,7 @@ use App\Services\NormeService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class NormeController extends Controller
 {
@@ -20,9 +21,29 @@ class NormeController extends Controller
     /**
      * Afficher la liste de toutes les normes.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $normes = $this->normeService->getAllNormes();
+        $secteurId = $request->query('secteur_id');
+
+        if ($secteurId) {
+            // Normes actives du secteur (via pivot norme_secteur)
+            // + normes actives universelles (est_universelle = true)
+            // sans doublons
+            $normesDuSecteur = Norme::whereHas('secteurs', function ($q) use ($secteurId) {
+                    $q->where('secteurs.id', $secteurId);
+                })
+                ->where('statut', 'actif')
+                ->get();
+
+            $normesUniverselles = Norme::where('est_universelle', true)
+                ->where('statut', 'actif')
+                ->get();
+
+            // Fusion sans doublons (un norme peut être dans le secteur ET universelle)
+            $normes = $normesDuSecteur->merge($normesUniverselles)->unique('id')->values();
+        } else {
+            $normes = $this->normeService->getAllNormes();
+        }
 
         return response()->json([
             'success' => true,

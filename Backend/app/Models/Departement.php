@@ -11,6 +11,7 @@ class Departement extends Model
 
     protected $fillable = [
         'entreprise_id',
+        'secteur_id',
         'nom',
         'description',
         'responsable_id',
@@ -19,6 +20,15 @@ class Departement extends Model
     public function entreprise()
     {
         return $this->belongsTo(Entreprise::class);
+    }
+
+    /**
+     * Le secteur principal auquel appartient ce département.
+     * Permet de filtrer les normes applicables via norme_secteur.
+     */
+    public function secteur()
+    {
+        return $this->belongsTo(Secteur::class);
     }
 
     public function responsable()

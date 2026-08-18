@@ -17,10 +17,12 @@ class Norme extends Model
         'organisme',
         'secteur',
         'statut',
+        'est_universelle',
     ];
 
     protected $casts = [
-        'statut' => 'string',
+        'statut'          => 'string',
+        'est_universelle' => 'boolean',
     ];
 
     /**
