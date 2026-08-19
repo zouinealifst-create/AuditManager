@@ -1,10 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import Login from './pages/Login'
+import Login from './pages/Authentification/Login'
 import Dashboard from './pages/Dashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminLayout from './layouts/AdminLayout'
-import Entreprises from './pages/Entreprises'
-import EntrepriseForm from './pages/EntrepriseForm'
+import EntrepriseProfil from './pages/Entreprise/EntrepriseProfil'
 
 function App() {
   return (
@@ -19,9 +18,7 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route path="/entreprises" element={<Entreprises />} />
-          <Route path="/entreprises/ajouter" element={<EntrepriseForm />} />
-          <Route path="/entreprises/:id/modifier" element={<EntrepriseForm />} />
+          <Route path="/entreprise" element={<EntrepriseProfil />} />
           <Route path="/dashboard" element={<Dashboard />} />
         </Route>
 
