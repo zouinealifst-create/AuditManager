@@ -1,0 +1,310 @@
+/* ============================================================
+   AuditDetail.css — Page de détail d'un audit
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.ad-page {
+  min-height: 100%;
+  background: #f0f4f8;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ── Header ── */
+.ad-header {
+  padding: 1.5rem 2rem 1rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ad-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ad-header-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--color-primary-dark, #2c767c), var(--color-primary, #3a8a90));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(44, 118, 124, 0.3);
+}
+
+.ad-header-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.ad-header-sub {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin: 0.1rem 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ad-header-actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.ad-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 9px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: opacity 0.2s, transform 0.1s;
+  border: none;
+}
+
+.ad-btn:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.ad-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ad-btn-back {
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  color: #64748b;
+}
+
+.ad-btn-plan {
+  background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+  color: #fff;
+}
+
+.ad-btn-start {
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+  color: #fff;
+}
+
+.ad-btn-close {
+  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+  color: #fff;
+}
+
+.ad-btn-primary {
+  background: linear-gradient(135deg, var(--color-primary-dark, #2c767c), var(--color-primary, #3a8a90));
+  color: #fff;
+}
+
+/* ── Corps ── */
+.ad-body {
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 960px;
+}
+
+/* ── Cards ── */
+.ad-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.ad-card-header {
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.ad-card-header-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgba(58, 138, 144, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary, #3a8a90);
+  font-size: 0.85rem;
+}
+
+.ad-card-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.ad-card-body {
+  padding: 1.25rem;
+}
+
+/* ── Grille infos ── */
+.ad-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.ad-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.ad-info-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+}
+
+.ad-info-value {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.ad-info-value.code {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--color-primary, #3a8a90);
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+/* ── Badges statut ── */
+.ad-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.ad-badge-brouillon  { background: #f1f5f9; color: #64748b; }
+.ad-badge-planifie   { background: #dbeafe; color: #1d4ed8; }
+.ad-badge-en_cours   { background: #fef9c3; color: #92400e; }
+.ad-badge-termine    { background: #dcfce7; color: #15803d; }
+.ad-badge-cloture    { background: #ede9fe; color: #6d28d9; }
+
+/* ── Progression ── */
+.ad-progress-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ad-progress-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.ad-progress-bar {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ad-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary-dark, #2c767c), var(--color-primary, #3a8a90));
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.ad-progress-note {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+/* ── Questions ── */
+.ad-questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.ad-question-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #f1f5f9;
+}
+
+.ad-question-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(58, 138, 144, 0.1);
+  color: var(--color-primary, #3a8a90);
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ad-question-text {
+  font-size: 0.875rem;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.ad-question-type {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin-top: 0.2rem;
+}
+
+.ad-empty-questions {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  padding: 2rem;
+}
+
+/* ── Loading ── */
+.ad-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  gap: 0.75rem;
+  color: #64748b;
+}

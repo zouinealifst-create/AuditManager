@@ -5,7 +5,7 @@ import { faHouse, faBuilding, faSitemap, faUsers, faUserShield} from '@fortaweso
 function Sidebar() {
     const menuItems = [
         { path: '/dashboard', label: 'Accueil', icon: faHouse },
-        { path: '/entreprises', label: 'Entreprises', icon: faBuilding },
+        { path: '/entreprise', label: 'Mon entreprise', icon: faBuilding },
         { path: '/departements', label: 'Départements', icon: faSitemap },
         { path: '/users', label: 'Utilisateurs', icon: faUsers },
         { path: '/roles', label: 'Rôles', icon: faUserShield },
