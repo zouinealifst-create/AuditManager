@@ -4,14 +4,9 @@ import Login from './pages/Authentification/Login'
 import Dashboard from './pages/Dashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminLayout from './layouts/AdminLayout'
-<<<<<<< HEAD
-import Entreprises from './pages/Entreprises'
-import EntrepriseForm from './pages/EntrepriseForm'
-import ChecklistsListPage from './pages/ChecklistsListPage'
-import ChecklistCreate from './pages/ChecklistCreate'
-=======
 import EntrepriseProfil from './pages/Entreprise/EntrepriseProfil'
->>>>>>> eae1fdacb82a33ce0f42b06f1ec3d47258780938
+import ChecklistsListPage from './pages/Checklist/ChecklistsListPage'
+import ChecklistCreate from './pages/Checklist/ChecklistCreate'
 
 function ChecklistsWrapper() {
   const [view, setView] = useState('list')

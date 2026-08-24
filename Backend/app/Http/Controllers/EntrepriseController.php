@@ -39,7 +39,17 @@ class EntrepriseController extends Controller
 
     public function update(EntrepriseRequest $request, Entreprise $entreprise)
     {
-        $entreprise->update($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('logo')) {
+            if ($entreprise->logo) {
+                \Storage::disk('public')->delete($entreprise->logo);
+            }
+
+            $data['logo'] = $request->file('logo')->store('logos', 'public');
+        }
+
+        $entreprise->update($data);
 
         return new EntrepriseResource($entreprise);
     }

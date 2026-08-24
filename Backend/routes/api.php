@@ -19,6 +19,10 @@ Route::get('/test', function () {
     return response()->json(['message' => 'Connexion Laravel-React réussie !']);
 });
 
+// Routes CRUD pour les Départements
+Route::apiResource('departements', DepartementController::class);
+
+// Routes CRUD pour les Entreprises
 Route::apiResource('entreprises', EntrepriseController::class);
 
 // Routes CRUD pour les Départements

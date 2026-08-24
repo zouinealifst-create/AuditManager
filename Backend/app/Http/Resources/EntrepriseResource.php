@@ -18,6 +18,7 @@ class EntrepriseResource extends JsonResource
             'email' => $this->email,
             'secteur_activite' => $this->secteur_activite,
             'statut' => $this->statut,
+            'logo_url' => $this->logo ? asset('storage/' . $this->logo) : null,
             'nombre_departements' => $this->whenCounted('departements'),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

@@ -1,0 +1,148 @@
+.entreprise-profile-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* ── Panneau gauche ── */
+.profile-side-panel {
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.profile-logo {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background-color: rgba(27, 94, 94, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin: 0 auto 1rem auto;
+}
+
+.profile-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-logo svg {
+  font-size: 2rem;
+  color: #1b5e5e;
+}
+
+.profile-name {
+  font-weight: 700;
+  color: var(--color-text-title);
+  margin-bottom: 0.5rem;
+}
+
+.profile-sector {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0.75rem 0 0 0;
+}
+
+.profile-side-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  text-align: left;
+  padding: 0.9rem 0;
+  border-top: 1px solid var(--color-border-light);
+  margin-top: 0.75rem;
+}
+
+.profile-side-stat svg {
+  color: #1b5e5e;
+  font-size: 1.1rem;
+  width: 18px;
+}
+
+.profile-side-stat .stat-value {
+  font-weight: 600;
+  color: var(--color-text-title);
+  font-size: 0.9rem;
+}
+
+.profile-side-stat .stat-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Panneau droit ── */
+.profile-detail-panel {
+  padding: 2rem;
+}
+
+.detail-block {
+  margin-bottom: 2rem;
+}
+
+.detail-block:last-child {
+  margin-bottom: 0;
+}
+
+.detail-block-title {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 700;
+  color: #1b5e5e;
+  margin-bottom: 1.1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.profile-about-text {
+  font-size: 0.9rem;
+  color: var(--color-text-body);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.info-row-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem 2rem;
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.info-row-icon {
+  color: #1b5e5e;
+  font-size: 1rem;
+  margin-top: 0.25rem;
+  width: 16px;
+  flex-shrink: 0;
+}
+
+.info-row-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-row-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.15rem;
+}
+
+.info-row-value {
+  font-size: 0.92rem;
+  color: var(--color-text-title);
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .entreprise-profile-layout {
+    grid-template-columns: 1fr;
+  }
+}

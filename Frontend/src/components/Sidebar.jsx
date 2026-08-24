@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faHouse, faBuilding, faSitemap, faUsers, faUserShield} from '@fortawesome/free-solid-svg-icons'
+import { faHouse, faBuilding, faSitemap, faUsers, faUserShield, faClipboardList, faClipboardCheck} from '@fortawesome/free-solid-svg-icons'
 
 function Sidebar() {
     const menuItems = [
@@ -9,6 +9,8 @@ function Sidebar() {
         { path: '/departements', label: 'Départements', icon: faSitemap },
         { path: '/users', label: 'Utilisateurs', icon: faUsers },
         { path: '/roles', label: 'Rôles', icon: faUserShield },
+        { path: '/checklists', label: 'Checklists', icon: faClipboardList },
+        { path: '/audits', label: 'Historique des audits', icon: faClipboardCheck },
     ]
 
     return (
