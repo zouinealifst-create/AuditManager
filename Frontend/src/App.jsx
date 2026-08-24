@@ -7,6 +7,8 @@ import AdminLayout from './layouts/AdminLayout'
 import EntrepriseProfil from './pages/Entreprise/EntrepriseProfil'
 import ChecklistsListPage from './pages/Checklist/ChecklistsListPage'
 import ChecklistCreate from './pages/Checklist/ChecklistCreate'
+import Departements from './pages/Departement/Departements'
+
 
 function ChecklistsWrapper() {
   const [view, setView] = useState('list')
@@ -30,6 +32,7 @@ export default function App() {
           }
         >
           <Route path="/entreprise" element={<EntrepriseProfil />} />
+          <Route path="/departements" element={<Departements />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/checklists" element={<ChecklistsWrapper />} />
         </Route>
