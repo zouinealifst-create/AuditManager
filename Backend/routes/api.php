@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EntrepriseController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SecteurController;
+
 
 
 Route::get('/user', function (Request $request) {
@@ -47,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('audits/{id}/affecter-departement',[AuditController::class, 'affecterDepartement']);
     Route::patch('audits/{id}/demarrer',            [AuditController::class, 'demarrer']);
     Route::patch('audits/{id}/cloturer',            [AuditController::class, 'cloturer']);
+    Route::get('secteurs', [SecteurController::class, 'index']);
 });
 
 // Auth Routes 

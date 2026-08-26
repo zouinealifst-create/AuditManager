@@ -5,15 +5,18 @@ namespace App\Http\Controllers;
 use App\Http\Requests\DepartementRequest;
 use App\Http\Resources\DepartementResource;
 use App\Models\Departement;
+use Illuminate\Http\Request;
 
 class DepartementController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $perPage = $request->input('per_page', 15);
+
         $departements = Departement::with(['entreprise', 'responsable', 'secteur'])
             ->withCount('users')
             ->latest()
-            ->paginate(10);
+            ->paginate($perPage);
 
         return DepartementResource::collection($departements);
     }
@@ -22,13 +25,13 @@ class DepartementController extends Controller
     {
         $departement = Departement::create($request->validated());
 
-        return new DepartementResource($departement->load(['entreprise', 'responsable']));
+        return new DepartementResource($departement->load(['entreprise', 'responsable', 'secteur']));
     }
 
     public function show(Departement $departement)
     {
         return new DepartementResource(
-            $departement->load(['entreprise', 'responsable'])->loadCount('users')
+            $departement->load(['entreprise', 'responsable', 'secteur'])->loadCount('users')
         );
     }
 
@@ -36,7 +39,7 @@ class DepartementController extends Controller
     {
         $departement->update($request->validated());
 
-        return new DepartementResource($departement->load(['entreprise', 'responsable']));
+        return new DepartementResource($departement->load(['entreprise', 'responsable', 'secteur']));
     }
 
     public function destroy(Departement $departement)

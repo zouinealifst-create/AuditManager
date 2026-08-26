@@ -18,6 +18,7 @@ class DepartementRequest extends FormRequest
             'nom' => 'required|string|max:255',
             'description' => 'nullable|string',
             'responsable_id' => 'nullable|exists:users,id',
+            'secteur_id' => 'nullable|exists:secteurs,id',
         ];
     }
 }
