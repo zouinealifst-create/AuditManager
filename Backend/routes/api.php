@@ -13,56 +13,52 @@ use App\Http\Controllers\SecteurController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 
-
-
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
-
 Route::get('/test', function () {
     return response()->json(['message' => 'Connexion Laravel-React réussie !']);
 });
 
-// Routes CRUD pour les Utilisateurs
-Route::apiResource('users', UserController::class);
+// ── Authentification ──────────────────────────────────────────────
+Route::post('login', [AuthController::class, 'login']);
 
-// Routes pour les Rôles (lecture seule)
-Route::get('roles', [RoleController::class, 'index']);
-
-// Routes CRUD pour les Départements
-Route::apiResource('departements', DepartementController::class);
-
-// Routes CRUD pour les Entreprises
-Route::apiResource('entreprises', EntrepriseController::class);
-
-// Routes CRUD pour les Départements
-Route::apiResource('departements', DepartementController::class);
-
-// Routes CRUD pour les Normes
-Route::apiResource('normes', NormeController::class);
-
-// Synchroniser les secteurs (et normes actives dérivées) d'une entreprise
-Route::post('entreprises/{entrepriseId}/secteurs', [EntrepriseController::class, 'syncSecteurs']);
-
-// ── Checklists & Questions (sans auth pour les tests dev) ────────────
-// TODO : remettre auth:sanctum quand le système de login sera branché au frontend
+// ── Checklists & Questions (sans auth pour les tests dev — TODO Dev2) ──
 Route::apiResource('checklists', ChecklistController::class);
 Route::apiResource('checklists.questions', QuestionController::class)->shallow();
 
-// ── Audits (protégés par auth:sanctum) ───────────────────────────────
+// ── Toutes les routes protégées (nécessitent un token valide) ──────
 Route::middleware('auth:sanctum')->group(function () {
-    Route::apiResource('audits', AuditController::class);
-    Route::patch('audits/{id}/planifier',           [AuditController::class, 'planifier']);
-    Route::patch('audits/{id}/affecter-auditeur',   [AuditController::class, 'affecterAuditeur']);
-    Route::patch('audits/{id}/affecter-departement',[AuditController::class, 'affecterDepartement']);
-    Route::patch('audits/{id}/demarrer',            [AuditController::class, 'demarrer']);
-    Route::patch('audits/{id}/cloturer',            [AuditController::class, 'cloturer']);
-    Route::get('secteurs', [SecteurController::class, 'index']);
-});
 
-// Auth Routes 
-Route::post('login', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('me', [AuthController::class, 'me']);
+
+    // Utilisateurs
+    Route::patch('users/{user}/toggle-statut', [UserController::class, 'toggleStatut']);
+    Route::apiResource('users', UserController::class);
+
+    // Rôles (lecture seule)
+    Route::get('roles', [RoleController::class, 'index']);
+
+    // Secteurs (lecture seule)
+    Route::get('secteurs', [SecteurController::class, 'index']);
+
+    // Entreprises
+    Route::post('entreprises/{entrepriseId}/secteurs', [EntrepriseController::class, 'syncSecteurs']);
+    Route::apiResource('entreprises', EntrepriseController::class);
+
+    // Départements
+    Route::apiResource('departements', DepartementController::class);
+
+    // Normes
+    Route::apiResource('normes', NormeController::class);
+
+    // Audits
+    Route::apiResource('audits', AuditController::class);
+    Route::patch('audits/{id}/planifier',            [AuditController::class, 'planifier']);
+    Route::patch('audits/{id}/affecter-auditeur',    [AuditController::class, 'affecterAuditeur']);
+    Route::patch('audits/{id}/affecter-departement', [AuditController::class, 'affecterDepartement']);
+    Route::patch('audits/{id}/demarrer',             [AuditController::class, 'demarrer']);
+    Route::patch('audits/{id}/cloturer',             [AuditController::class, 'cloturer']);
 });

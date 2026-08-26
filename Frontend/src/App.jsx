@@ -8,6 +8,8 @@ import EntrepriseProfil from './pages/Entreprise/EntrepriseProfil'
 import ChecklistsListPage from './pages/Checklist/ChecklistsListPage'
 import ChecklistCreate from './pages/Checklist/ChecklistCreate'
 import Departements from './pages/Departement/Departements'
+import Users from './pages/Utilisateur/Users'
+
 
 
 function ChecklistsWrapper() {
@@ -35,6 +37,7 @@ export default function App() {
           <Route path="/departements" element={<Departements />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/checklists" element={<ChecklistsWrapper />} />
+          <Route path="/users" element={<Users />} />
         </Route>
 
         <Route path="/" element={<Navigate to="/dashboard" />} />

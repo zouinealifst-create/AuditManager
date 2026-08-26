@@ -52,4 +52,13 @@ class UserController extends Controller
 
         return response()->json(['message' => 'Utilisateur supprimé avec succès.']);
     }
+
+    public function toggleStatut(User $user)
+    {
+        $user->update([
+            'statut' => $user->statut === 'actif' ? 'inactif' : 'actif',
+        ]);
+
+        return new UserResource($user->load(['role', 'departement']));
+    }
 }
