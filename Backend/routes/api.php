@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EntrepriseController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SecteurController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\RoleController;
 
 
 
@@ -20,6 +22,12 @@ Route::get('/user', function (Request $request) {
 Route::get('/test', function () {
     return response()->json(['message' => 'Connexion Laravel-React réussie !']);
 });
+
+// Routes CRUD pour les Utilisateurs
+Route::apiResource('users', UserController::class);
+
+// Routes pour les Rôles (lecture seule)
+Route::get('roles', [RoleController::class, 'index']);
 
 // Routes CRUD pour les Départements
 Route::apiResource('departements', DepartementController::class);

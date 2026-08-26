@@ -93,16 +93,25 @@ export default function DepartementForm({ initialData, onClose, onSaved }) {
         await createDepartement(payload)
       }
       onSaved()
-    } catch (err) {
-      if (err.response?.status === 422) {
-        setErrors(err.response.data.errors || {})
-        setErrGlobal(err.response.data.message || 'Données invalides.')
-      } else {
-        setErrGlobal('Impossible de contacter le serveur.')
-      }
-    } finally {
-      setSaving(false)
+      } catch (err) {
+    console.error('Erreur création département:', err)
+
+    if (err.response?.status === 422) {
+      setErrors(err.response.data.errors || {})
+      setErrGlobal(err.response.data.message || 'Données invalides.')
+    } else if (err.response) {
+      setErrGlobal(
+        err.response.data?.message ||
+        `Erreur serveur (${err.response.status}). Consultez les logs Laravel.`
+      )
+    } else if (err.request) {
+      setErrGlobal('Impossible de contacter le serveur. Vérifiez que le backend Laravel est démarré.')
+    } else {
+      setErrGlobal('Une erreur inattendue est survenue.')
     }
+  } finally {
+    setSaving(false)
+  }
   }
 
   return (

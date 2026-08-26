@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-    faPlus, faFilter, faPen, faTrash, faFolder, faFolderOpen,
+    faPlus, faMinus, faFilter, faPen, faTrash, faFolder, faFolderOpen,
     faChevronLeft, faChevronRight, faCircleUser, faSitemap,
     faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
@@ -20,6 +20,8 @@ function Departements() {
     const [activeFilter, setActiveFilter] = useState({ type: 'all' })
     const [page, setPage] = useState(1)
     const [rowsPerPage, setRowsPerPage] = useState(10)
+    // Ids des groupes (secteurs) repliés. Un groupe absent de ce Set = déplié.
+    const [collapsedGroups, setCollapsedGroups] = useState(new Set())
 
     const fetchDepartements = async () => {
         setLoading(true)
@@ -100,6 +102,20 @@ function Departements() {
     )
   }
 
+  // ── Plier / déplier un groupe (secteur) — n'affecte pas le filtre actif ──
+  const toggleGroupCollapse = (groupId, e) => {
+    e.stopPropagation()
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(groupId)) {
+        next.delete(groupId)
+      } else {
+        next.add(groupId)
+      }
+      return next
+    })
+  }
+
   const handleDelete = async (id, nom) => {
     if (!confirm(`Supprimer le département "${nom}" ?`)) return
     await deleteDepartement(id)
@@ -139,7 +155,7 @@ function Departements() {
   return (
     <div className="dp-page">
       <div className="dp-layout">
-        {/* ── Panneau gauche : groupé par secteur ── */}
+        {/* ── Panneau gauche : arborescence pliable par secteur ── */}
         <div className="dp-tree-panel">
           <div className="dp-tree-header">
             <FontAwesomeIcon icon={faSitemap} />
@@ -165,6 +181,7 @@ function Departements() {
               const isWarning = group.id === 'none'
               const isActiveGroup =
                 activeFilter.type === 'secteur' && activeFilter.id === group.id
+              const isCollapsed = collapsedGroups.has(group.id)
 
               return (
                 <div key={group.id} className="dp-tree-group">
@@ -174,6 +191,17 @@ function Departements() {
                     } ${isWarning ? 'warning' : ''}`}
                     onClick={() => setActiveFilter({ type: 'secteur', id: group.id })}
                   >
+                    {/* Icône +/- : plier / déplier sans changer le filtre */}
+                    <span
+                      className="dp-tree-toggle"
+                      onClick={(e) => toggleGroupCollapse(group.id, e)}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={isCollapsed ? 'Déplier' : 'Plier'}
+                    >
+                      <FontAwesomeIcon icon={isCollapsed ? faPlus : faMinus} />
+                    </span>
+
                     <FontAwesomeIcon
                       icon={isWarning ? faTriangleExclamation : (isActiveGroup ? faFolderOpen : faFolder)}
                       className="dp-tree-icon"
@@ -182,20 +210,27 @@ function Departements() {
                     <span className="dp-tree-count">{group.departements.length}</span>
                   </button>
 
-                  <div className="dp-tree-sub-list">
-                    {group.departements.map((d) => (
-                      <button
-                        key={d.id}
-                        className={`dp-tree-sub-item ${
-                          activeFilter.type === 'dept' && activeFilter.id === d.id ? 'active' : ''
-                        }`}
-                        onClick={() => setActiveFilter({ type: 'dept', id: d.id })}
-                        title={d.nom}
-                      >
-                        {d.nom}
-                      </button>
-                    ))}
-                  </div>
+                  {!isCollapsed && (
+                    <div className="dp-tree-sub-list">
+                      {group.departements.map((d) => {
+                        const isActiveDept = activeFilter.type === 'dept' && activeFilter.id === d.id
+                        return (
+                          <button
+                            key={d.id}
+                            className={`dp-tree-sub-item ${isActiveDept ? 'active' : ''}`}
+                            onClick={() => setActiveFilter({ type: 'dept', id: d.id })}
+                            title={d.nom}
+                          >
+                            <FontAwesomeIcon
+                              icon={isActiveDept ? faFolderOpen : faFolder}
+                              className="dp-tree-sub-icon"
+                            />
+                            <span className="dp-tree-sub-label">{d.nom}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               )
             })}
