@@ -11,8 +11,10 @@ class Entreprise extends Model
     use HasFactory;
 
     protected $fillable = [
-        'nom', 'description', 'adresse', 'telephone', 'email', 'secteur_activite', 'statut', 'logo'
-    ];
+    'nom', 'description', 'adresse', 'telephone', 'email',
+    'secteur_activite', 'statut', 'logo',
+    'site_web', 'ice', 'registre_commerce', 
+];
 
     public function departements()
     {

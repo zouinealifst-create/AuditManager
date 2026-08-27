@@ -16,6 +16,9 @@ return new class extends Migration
             $table->string('email')->nullable()->after('telephone');
             $table->string('secteur_activite')->nullable()->after('email');
             $table->string('logo')->nullable()->after('secteur_activite');
+            $table->string('ice')->nullable();
+            $table->string('registre_commerce')->nullable();
+            $table->string('site_web')->nullable();
         });
     }
 
@@ -25,8 +28,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('entreprises', function (Blueprint $table) {
-            $table->dropColumn(['telephone', 'email', 'secteur_activite']);
-            $table->dropColumn('logo');
+            $table->dropColumn(['telephone', 'email', 'secteur_activite', 'logo', 'ice', 'registre_commerce', 'site_web']);
         });
     }
 };

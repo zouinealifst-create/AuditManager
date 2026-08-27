@@ -31,10 +31,12 @@ export default function DepartementForm({ initialData, onClose, onSaved }) {
 
   // ── Charger la liste des utilisateurs pour le select responsable ──
   useEffect(() => {
-    getUsers()
+    getUsers({ per_page: 100 })
       .then((data) => {
         const list = Array.isArray(data) ? data : data?.data ?? []
-        setUsers(list)
+        // On ne garde que les utilisateurs ayant le rôle "Responsable Département"
+        const responsables = list.filter((u) => u.role?.name === 'Responsable Département')
+        setUsers(responsables)
       })
       .catch(() => setUsers([]))
       .finally(() => setUsersLoaded(true))
@@ -237,6 +239,9 @@ export default function DepartementForm({ initialData, onClose, onSaved }) {
                   onChange={(e) => handleChange('responsable_id', e.target.value)}
                 >
                   <option value="">— Aucun responsable —</option>
+                  {users.length === 0 && (
+                    <option disabled>Aucun utilisateur avec le rôle "Responsable Département"</option>
+                  )}
                   {users.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.name}

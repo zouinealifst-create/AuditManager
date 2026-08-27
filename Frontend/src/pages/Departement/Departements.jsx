@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-    faPlus, faMinus, faFilter, faPen, faTrash, faFolder, faFolderOpen,
+    faPlus, faMinus, faPen, faTrash, faFolder, faFolderOpen,
     faChevronLeft, faChevronRight, faCircleUser, faSitemap,
     faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
@@ -256,9 +256,6 @@ function Departements() {
             </div>
 
             <div className="dp-header-actions">
-              <button className="dp-filter-icon" title="Filtres">
-                <FontAwesomeIcon icon={faFilter} />
-              </button>
               <button className="dp-add-btn" onClick={openAdd}>
                 <FontAwesomeIcon icon={faPlus} />
                 Ajouter Département
