@@ -12,6 +12,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SecteurController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ReponseController;
+use App\Http\Controllers\NonConformiteController;
 
 Route::get('/test', function () {
     return response()->json(['message' => 'Connexion Laravel-React réussie !']);
@@ -61,4 +63,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('audits/{id}/affecter-departement', [AuditController::class, 'affecterDepartement']);
     Route::patch('audits/{id}/demarrer',             [AuditController::class, 'demarrer']);
     Route::patch('audits/{id}/cloturer',             [AuditController::class, 'cloturer']);
+
+    // Réponses
+    Route::apiResource('reponses', ReponseController::class);
+
+    // Non-conformités
+    Route::apiResource('non-conformites', NonConformiteController::class);
 });

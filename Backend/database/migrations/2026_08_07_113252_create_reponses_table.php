@@ -6,20 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('reponses', function (Blueprint $table) {
             $table->id();
+
+            $table->foreignId('audit_id')->constrained('audits')->onDelete('cascade');
+            $table->foreignId('question_id')->constrained('questions')->onDelete('cascade');
+
+            $table->enum('statut', ['conforme', 'non_conforme', 'non_applicable']);
+            $table->text('commentaire')->nullable();
+            $table->string('preuve')->nullable();
+
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('reponses');
