@@ -13,7 +13,12 @@ class NormeService
      */
     public function getAllNormes()
     {
-        return Norme::all();
+        // Limite à 200 résultats pour le select dropdown — 38 962 normes en base
+        // bloqueraient le navigateur. Sélection des colonnes strictement nécessaires.
+        return Norme::select('id', 'code', 'nom', 'statut', 'est_universelle')
+            ->orderBy('code')
+            ->limit(200)
+            ->get();
     }
 
     /**

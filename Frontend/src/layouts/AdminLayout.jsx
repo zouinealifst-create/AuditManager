@@ -9,6 +9,8 @@ const PAGE_TITLES = {
   '/departements': 'Départements',
   '/users': 'Utilisateurs',
   '/roles': 'Rôles',
+  '/checklists': 'Checklists',
+  '/audits': 'Historique des audits',
 }
 
 function AdminLayout() {

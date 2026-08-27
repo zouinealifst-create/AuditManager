@@ -79,7 +79,7 @@ export default function ChecklistsListPage() {
   // ── Filtres ─────────────────────────────────────────────
   const [search,       setSearch]       = useState('')
   const [filterStatut, setFilterStatut] = useState('')
-  const [filterNorme,  setFilterNorme]  = useState('')
+  const [filterNorme,  setFilterNorme]  = useState('') // norme_id
   const [filtersOpen,  setFiltersOpen]  = useState(false)
 
   // ── Pagination ──────────────────────────────────────────
@@ -111,29 +111,67 @@ export default function ChecklistsListPage() {
   const apiTotal   = checklistsPage?.total    ?? 0
   const apiLastPg  = checklistsPage?.last_page ?? 1
 
-  // Normes : cache 10 min — catalogue rarement modifié
+  // Normes (catalogue complet, utilisé uniquement pour l'édition/création)
   const { data: normes = [] } = useGetAllNormesQuery()
+
+  // ── Normes disponibles pour le filtre ────────────────────
+  // On extrait uniquement les normes présentes dans les checklists affichées
+  const normesDisponibles = useMemo(() => {
+    const map = new Map()
+    checklists.forEach(c => {
+      if (c.norme && c.norme_id) {
+        map.set(c.norme_id, c.norme)
+      }
+    })
+    return Array.from(map.values()).sort((a, b) => 
+      (a.code || '').localeCompare(b.code || '')
+    )
+  }, [checklists])
 
   // ── Mutation suppression ─────────────────────────────────
   const [deleteChecklist] = useDeleteChecklistMutation()
 
-  // ── Filtrage local (recherche texte) ──────────────────────
+  // ── Filtrage local (statut + norme + recherche texte) ────────
+  // Les filtres statut et norme sont appliqués ICI côté frontend car
+  // le backend (/checklists sans auth:sanctum) ne filtre pas de façon fiable.
+  // Les trois filtres sont combinables et s'appliquent dans cet ordre :
+  //   1. statut     (comparaison exacte sur c.statut)
+  //   2. norme      (comparaison exacte sur c.norme_id)
+  //   3. texte      (recherche sur titre, code norme, nom norme)
   const displayed = useMemo(() => {
+    let result = checklists
+
+    // 1. Filtre statut
+    if (filterStatut) {
+      result = result.filter(c => c.statut === filterStatut)
+    }
+
+    // 2. Filtre norme (comparaison d'ID)
+    if (filterNorme) {
+      result = result.filter(c => String(c.norme_id) === String(filterNorme))
+    }
+
+    // 3. Filtre texte (titre + norme)
     const q = search.trim().toLowerCase()
-    if (!q) return checklists
-    return checklists.filter(c =>
-      c.titre?.toLowerCase().includes(q) ||
-      c.norme?.code?.toLowerCase().includes(q) ||
-      c.norme?.nom?.toLowerCase().includes(q)
-    )
-  }, [checklists, search])
+    if (q) {
+      result = result.filter(c =>
+        c.titre?.toLowerCase().includes(q) ||
+        c.norme?.code?.toLowerCase().includes(q) ||
+        c.norme?.nom?.toLowerCase().includes(q)
+      )
+    }
+
+    return result
+  }, [checklists, search, filterStatut, filterNorme])
 
   // Pagination locale (découpe displayed selon pageSize)
+  // On applique TOUJOURS le slice local, que le filtrage vienne d'une recherche
+  // texte, d'un filtre statut ou d'un filtre norme.
+  // Cela garantit que les trois filtres se combinent correctement et que
+  // pageSize est toujours respecté.
   const localTotalPages = Math.max(1, Math.ceil(displayed.length / pageSize))
   const localPage  = Math.min(page, localTotalPages)
-  const pageItems  = search.trim()
-    ? displayed.slice((localPage - 1) * pageSize, localPage * pageSize)
-    : displayed // déjà paginé côté back — afficher tel quel
+  const pageItems  = displayed.slice((localPage - 1) * pageSize, localPage * pageSize)
 
   // ── Sélection ────────────────────────────────────────────
   const allChecked = pageItems.length > 0 && pageItems.every(c => selected.has(c.id))
@@ -302,11 +340,11 @@ export default function ChecklistsListPage() {
         <div className="cl-header-right">
           <button
             className="cl-btn-filter"
+            title="Filtres"
             onClick={() => setFiltersOpen(v => !v)}
             aria-expanded={filtersOpen}
           >
             <FontAwesomeIcon icon={faFilter} />
-            Filtres
             {(filterStatut || filterNorme) && <span className="cl-filter-dot" />}
           </button>
           <button className="cl-btn-new" onClick={() => { setEditChecklist(null); setPanelOpen(true) }}>
@@ -354,7 +392,7 @@ export default function ChecklistsListPage() {
                 </Form.Select>
               </div>
 
-              {/* Filtre norme */}
+              {/* Filtre norme — uniquement les normes présentes */}
               <div className="cl-filter-item">
                 <Form.Select
                   className="cl-select"
@@ -362,8 +400,10 @@ export default function ChecklistsListPage() {
                   onChange={e => { setFilterNorme(e.target.value); setPage(1) }}
                 >
                   <option value="">Toutes les normes</option>
-                  {normes.map(n => (
-                    <option key={n.id} value={n.id}>{n.code} — {n.nom}</option>
+                  {normesDisponibles.map(n => (
+                    <option key={n.id} value={n.id}>
+                      {n.code} {n.nom ? `— ${n.nom.substring(0, 40)}${n.nom.length > 40 ? '...' : ''}` : ''}
+                    </option>
                   ))}
                 </Form.Select>
               </div>
@@ -533,9 +573,9 @@ export default function ChecklistsListPage() {
         {!loading && pageItems.length > 0 && (
           <div className="cl-pagination">
             <span className="cl-pg-info">
-              Page {page} / {search.trim() ? localTotalPages : apiLastPg}
+              Page {localPage} / {localTotalPages}
               &nbsp;·&nbsp;
-              {search.trim() ? displayed.length : apiTotal} résultat{apiTotal !== 1 ? 's' : ''}
+              {displayed.length} résultat{displayed.length !== 1 ? 's' : ''}
             </span>
             <div className="cl-pg-nav">
               <button
@@ -549,7 +589,7 @@ export default function ChecklistsListPage() {
               <button
                 className="cl-pg-btn"
                 onClick={() => setPage(p => p + 1)}
-                disabled={search.trim() ? page >= localTotalPages : page >= apiLastPg}
+                disabled={page >= localTotalPages}
                 aria-label="Page suivante"
               >
                 <FontAwesomeIcon icon={faChevronRight} />
