@@ -68,11 +68,13 @@ export async function publierChecklist(id) {
 
 /**
  * Récupère toutes les checklists actives (pour la création d'un audit).
- * Charge toutes les pages et retourne un tableau plat.
+ * Filtre optionnellement par département_id.
+ * @param {number} departement_id
  * @returns {Promise<Array>}
  */
-export async function listChecklistsActives() {
-  const response = await client.get('/checklists', { params: { statut: 'actif', page: 1 } })
+export async function listChecklistsActives(departement_id = null) {
+  const params = { statut: 'actif', page: 1 }
+  if (departement_id) params.departement_id = departement_id
+  const response = await client.get('/checklists', { params })
   return response.data.data?.data ?? []
 }
-

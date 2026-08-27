@@ -12,6 +12,14 @@
  * Props :
  *   onCreated(audit) — appelé après création réussie
  *   onCancel()       — retour à la liste
+ *
+ * Migration RTK Query :
+ *   • useGetDepartementsQuery         → cache 10 min
+ *   • useListChecklistsActivesQuery   → cache 5 min, arg = departement_id
+ *   • useCreateAuditMutation          → invalide la liste audits
+ *   • usePlanifierAuditMutation       → invalide liste + détail
+ *   Les auditeurs sont toujours chargés via client axios direct
+ *   (pas de route /users dans l'apiResource backend, usage interne uniquement)
  */
 import { useState, useEffect } from 'react'
 import { Spinner, Alert } from 'react-bootstrap'
@@ -21,9 +29,9 @@ import {
   faCheck, faCalendarCheck, faSave,
 } from '@fortawesome/free-solid-svg-icons'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getDepartements } from '../../api/departements'
-import { listChecklistsActives } from '../../api/checklists'
-import { createAudit, planifierAudit } from '../../api/audits'
+import { useGetDepartementsQuery } from '../../store/api/departementsApi'
+import { useListChecklistsActivesQuery } from '../../store/api/checklistsApi'
+import { useCreateAuditMutation, usePlanifierAuditMutation } from '../../store/api/auditsApi'
 import client from '../../api/client'
 import './AuditCreate.css'
 
@@ -37,52 +45,48 @@ const STEPS = [
 export default function AuditCreate({ onCreated, onCancel }) {
   const [step, setStep] = useState(0)
 
-  // ── Données des selects ──
-  const [departements,  setDepartements]  = useState([])
-  const [checklists,    setChecklists]    = useState([])
-  const [auditeurs,     setAuditeurs]     = useState([])
-  const [loadingCl,     setLoadingCl]     = useState(false)
-  const [loadingUsers,  setLoadingUsers]  = useState(false)
-
   // ── Sélections ──
-  const [selectedDept,  setSelectedDept]  = useState('')
-  const [selectedCl,    setSelectedCl]    = useState(null)  // objet checklist
-  const [selectedAuditeur, setSelectedAuditeur] = useState('')
+  const [selectedDept,       setSelectedDept]       = useState('')
+  const [selectedChecklists, setSelectedChecklists] = useState([])  // tableau d'objets checklist
+  const [selectedAuditeur,   setSelectedAuditeur]   = useState('')
 
   // ── Étape 4 ──
-  const [titre,       setTitre]       = useState('')
-  const [datePrevue,  setDatePrevue]  = useState('')
+  const [titre,      setTitre]      = useState('')
+  const [datePrevue, setDatePrevue] = useState('')
+
+  // ── Auditeurs (chargés via axios — endpoint non exposé dans apiResource) ──
+  const [auditeurs,    setAuditeurs]    = useState([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
 
   // ── Soumission ──
-  const [saving,     setSaving]     = useState(false)
-  const [errGlobal,  setErrGlobal]  = useState('')
-  const [errors,     setErrors]     = useState({})
+  const [saving,    setSaving]    = useState(false)
+  const [errGlobal, setErrGlobal] = useState('')
+  const [errors,    setErrors]    = useState({})
 
-  // ── Charger départements ──
-  useEffect(() => {
-    getDepartements()
-      .then(data => setDepartements(Array.isArray(data) ? data : []))
-      .catch(() => {})
-  }, [])
+  // ── Données RTK Query ────────────────────────────────────────
+  // Départements : cache 10 min — ne refetch pas entre navigations
+  const { data: departements = [] } = useGetDepartementsQuery()
 
-  // ── Charger checklists actives (étape 2) ──
-  useEffect(() => {
-    if (step !== 1) return
-    setLoadingCl(true)
-    listChecklistsActives()
-      .then(data => setChecklists(data))
-      .catch(() => setChecklists([]))
-      .finally(() => setLoadingCl(false))
-  }, [step])
+  // Checklists actives : activé seulement à l'étape 2 (skip si autre étape)
+  // L'arg departement_id est passé pour filtrer si besoin côté back
+  const {
+    data: checklists = [],
+    isLoading: loadingCl,
+  } = useListChecklistsActivesQuery(selectedDept || null, {
+    skip: step !== 1, // n'appelle pas l'API si on n'est pas à l'étape 2
+  })
 
-  // ── Charger auditeurs (étape 3) ──
+  // ── Mutations ────────────────────────────────────────────────
+  const [createAudit]    = useCreateAuditMutation()
+  const [planifierAudit] = usePlanifierAuditMutation()
+
+  // ── Charger auditeurs à l'étape 3 (axios direct — pas dans RTK Query) ──
   useEffect(() => {
     if (step !== 2) return
     setLoadingUsers(true)
     client.get('/users')
       .then(res => {
         const all = res.data?.data ?? res.data ?? []
-        // On filtre côté frontend sur le rôle Auditeur
         const list = all.filter(u => u.role?.name === 'Auditeur')
         setAuditeurs(list)
       })
@@ -90,31 +94,23 @@ export default function AuditCreate({ onCreated, onCancel }) {
       .finally(() => setLoadingUsers(false))
   }, [step])
 
-  // ── Pré-remplir le titre si une checklist est sélectionnée ──
+  // ── Pré-remplir le titre si des checklists sont sélectionnées ──
   useEffect(() => {
-    if (selectedCl && !titre) {
-      setTitre(selectedCl.titre)
+    if (selectedChecklists.length > 0 && !titre) {
+      setTitre(selectedChecklists.map(c => c.titre).join(' + '))
     }
-  }, [selectedCl])
+  }, [selectedChecklists]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Validation par étape ──
   const canNext = () => {
     if (step === 0) return !!selectedDept
-    if (step === 1) return !!selectedCl
+    if (step === 1) return selectedChecklists.length > 0
     if (step === 2) return true  // auditeur optionnel à ce stade
     return false
   }
 
-  const next = () => {
-    setErrors({})
-    setErrGlobal('')
-    setStep(s => s + 1)
-  }
-  const prev = () => {
-    setErrors({})
-    setErrGlobal('')
-    setStep(s => s - 1)
-  }
+  const next = () => { setErrors({}); setErrGlobal(''); setStep(s => s + 1) }
+  const prev = () => { setErrors({}); setErrGlobal(''); setStep(s => s - 1) }
 
   // ── Soumission — Brouillon ──
   const handleBrouillon = async () => {
@@ -122,14 +118,15 @@ export default function AuditCreate({ onCreated, onCancel }) {
     setSaving(true); setErrGlobal('')
     try {
       const audit = await createAudit({
-        checklist_id:  selectedCl.id,
-        titre:         titre.trim(),
+        checklist_ids:  selectedChecklists.map(c => c.id),
+        titre:          titre.trim(),
         departement_id: selectedDept || null,
-        auditeur_id:   selectedAuditeur || null,
-      })
+        auditeur_id:    selectedAuditeur || null,
+      }).unwrap()
+      // La liste audits est automatiquement invalidée par createAuditMutation
       onCreated(audit)
     } catch (err) {
-      setErrGlobal(err.response?.data?.message ?? 'Erreur lors de la création.')
+      setErrGlobal(err.data?.message ?? 'Erreur lors de la création.')
     } finally {
       setSaving(false)
     }
@@ -138,52 +135,68 @@ export default function AuditCreate({ onCreated, onCancel }) {
   // ── Soumission — Planifier directement ──
   const handlePlanifier = async () => {
     const errs = {}
-    if (!titre.trim())    errs.titre      = 'Le titre est requis.'
-    if (!datePrevue)      errs.datePrevue = 'La date prévue est requise pour planifier.'
-    if (!selectedDept)    errs.dept       = 'Le département est requis pour planifier.'
-    if (!selectedAuditeur) errs.auditeur  = 'L\'auditeur est requis pour planifier.'
+    if (!titre.trim())     errs.titre      = 'Le titre est requis.'
+    if (!datePrevue)       errs.datePrevue = 'La date prévue est requise pour planifier.'
+    if (!selectedDept)     errs.dept       = 'Le département est requis pour planifier.'
+    if (!selectedAuditeur) errs.auditeur   = 'L\'auditeur est requis pour planifier.'
     if (Object.keys(errs).length > 0) { setErrors(errs); return }
 
     setSaving(true); setErrGlobal('')
     try {
-      // Créer en brouillon puis planifier
+      // Créer en brouillon puis planifier immédiatement
       const audit = await createAudit({
-        checklist_id:  selectedCl.id,
-        titre:         titre.trim(),
+        checklist_ids:  selectedChecklists.map(c => c.id),
+        titre:          titre.trim(),
         departement_id: selectedDept,
-        auditeur_id:   selectedAuditeur,
-        date_prevue:   datePrevue,
-      })
-      await planifierAudit(audit.id, {
-        date_prevue:   datePrevue,
+        auditeur_id:    selectedAuditeur,
+        date_prevue:    datePrevue,
+      }).unwrap()
+
+      await planifierAudit({
+        id:             audit.id,
+        date_prevue:    datePrevue,
         departement_id: Number(selectedDept),
-        auditeur_id:   Number(selectedAuditeur),
-      })
+        auditeur_id:    Number(selectedAuditeur),
+      }).unwrap()
+
       onCreated({ ...audit, statut: 'planifie' })
     } catch (err) {
-      setErrGlobal(err.response?.data?.message ?? 'Erreur lors de la planification.')
+      setErrGlobal(err.data?.message ?? 'Erreur lors de la planification.')
     } finally {
       setSaving(false)
     }
   }
 
-  const deptLabel   = departements.find(d => d.id === Number(selectedDept))?.nom ?? ''
+  const deptLabel     = departements.find(d => d.id === Number(selectedDept))?.nom ?? ''
   const auditeurLabel = auditeurs.find(u => u.id === Number(selectedAuditeur))?.name ?? ''
 
   return (
-    <div className="ac-page">
+    <div className="ac-page" style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden', margin: 0 }}>
       {/* Header */}
       <div className="ac-header">
-        <div className="ac-header-icon">
-          <FontAwesomeIcon icon={faClipboardCheck} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div className="ac-header-icon">
+              <FontAwesomeIcon icon={faClipboardCheck} />
+            </div>
+            <div>
+              <h1 className="ac-header-title">Nouvel Audit</h1>
+              <p className="ac-header-sub">Étape {step + 1} sur {STEPS.length}</p>
+            </div>
+          </div>
+          {onCancel && (
+            <button
+              onClick={onCancel}
+              style={{
+                background: 'none', border: '1.5px solid #cbd5e1',
+                borderRadius: '8px', padding: '0.4rem 0.9rem',
+                fontSize: '0.85rem', color: '#64748b', cursor: 'pointer',
+              }}
+            >
+              Fermer ✕
+            </button>
+          )}
         </div>
-        <div>
-          <h1 className="ac-header-title">Nouvel Audit</h1>
-          <p className="ac-header-sub">Étape {step + 1} sur {STEPS.length}</p>
-        </div>
-        <button className="ac-btn-back" onClick={onCancel}>
-          <FontAwesomeIcon icon={faArrowLeft} className="me-1" /> Retour
-        </button>
       </div>
 
       {/* Stepper */}
@@ -241,7 +254,7 @@ export default function AuditCreate({ onCreated, onCancel }) {
               <>
                 <div className="ac-step-title">Choisir une checklist</div>
                 <div className="ac-step-desc">
-                  Sélectionnez la checklist active à utiliser pour cet audit.
+                  Sélectionnez les checklists actives à utiliser pour cet audit.
                 </div>
                 {loadingCl ? (
                   <div className="ac-cl-loading">
@@ -249,29 +262,38 @@ export default function AuditCreate({ onCreated, onCancel }) {
                     Chargement des checklists…
                   </div>
                 ) : checklists.length === 0 ? (
-                  <div className="ac-cl-loading">Aucune checklist active disponible.</div>
+                  <div className="ac-cl-loading">Aucune checklist disponible pour ce département. Créez-en une pour la norme correspondante d'abord.</div>
                 ) : (
                   <div className="ac-cl-grid">
-                    {checklists.map(cl => (
-                      <div
-                        key={cl.id}
-                        className={`ac-cl-item ${selectedCl?.id === cl.id ? 'selected' : ''}`}
-                        onClick={() => setSelectedCl(cl)}
-                      >
-                        <div className="ac-cl-radio">
-                          {selectedCl?.id === cl.id && <div className="ac-cl-radio-dot" />}
-                        </div>
-                        <div>
-                          <div className="ac-cl-info-title">{cl.titre}</div>
-                          {cl.norme && (
-                            <div className="ac-cl-info-norme">{cl.norme.code} — {cl.norme.nom}</div>
-                          )}
-                          <div className="ac-cl-info-qs">
-                            {cl.questions?.length ?? '?'} question(s)
+                    {checklists.map(cl => {
+                      const isSelected = selectedChecklists.some(c => c.id === cl.id)
+                      return (
+                        <div
+                          key={cl.id}
+                          className={`ac-cl-item ${isSelected ? 'selected' : ''}`}
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedChecklists(prev => prev.filter(c => c.id !== cl.id))
+                            } else {
+                              setSelectedChecklists(prev => [...prev, cl])
+                            }
+                          }}
+                        >
+                          <div className="ac-cl-radio">
+                            {isSelected && <div className="ac-cl-radio-dot" />}
+                          </div>
+                          <div>
+                            <div className="ac-cl-info-title">{cl.titre}</div>
+                            {cl.norme && (
+                              <div className="ac-cl-info-norme">{cl.norme.code} — {cl.norme.nom}</div>
+                            )}
+                            <div className="ac-cl-info-qs">
+                              {cl.questions?.length ?? '?'} question(s)
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </>
@@ -323,8 +345,8 @@ export default function AuditCreate({ onCreated, onCancel }) {
                 {/* Récap */}
                 <div className="ac-recap">
                   <div>📁 <strong>Département :</strong> {deptLabel || '—'}</div>
-                  <div>📋 <strong>Checklist :</strong> {selectedCl?.titre}</div>
-                  {selectedCl?.norme && <div>📐 <strong>Norme :</strong> {selectedCl.norme.code}</div>}
+                  <div>📋 <strong>Checklists :</strong> {selectedChecklists.map(c => c.titre).join(' / ')}</div>
+                  <div>📐 <strong>Normes :</strong> {selectedChecklists.map(c => c.norme?.code).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(', ')}</div>
                   {auditeurLabel && <div>👤 <strong>Auditeur :</strong> {auditeurLabel}</div>}
                 </div>
 

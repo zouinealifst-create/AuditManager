@@ -40,7 +40,7 @@ export async function getAudit(id) {
 
 /**
  * Crée un nouvel audit (statut initial : brouillon).
- * @param {{ checklist_id: number, titre: string, departement_id?: number, auditeur_id?: number, date_prevue?: string }} data
+ * @param {{ checklist_ids: number[], titre: string, departement_id?: number, auditeur_id?: number, date_prevue?: string }} data
  */
 export async function createAudit(data) {
   const response = await client.post('/audits', data)

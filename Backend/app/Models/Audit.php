@@ -10,7 +10,6 @@ class Audit extends Model
     use HasFactory;
 
     protected $fillable = [
-        'checklist_id',
         'titre',
         'departement_id',
         'auditeur_id',
@@ -26,22 +25,22 @@ class Audit extends Model
     ];
 
     /**
-     * La checklist sur laquelle est basé cet audit.
+     * Les checklists sur lesquelles est basé cet audit.
      */
-    public function checklist()
+    public function checklists()
     {
-        return $this->belongsTo(Checklist::class);
+        return $this->belongsToMany(Checklist::class, 'audit_checklist')->withTimestamps();
     }
 
     /**
-     * La norme de cet audit.
-     * La norme N'EST PAS stockée directement sur l'audit — elle est toujours
-     * dérivée de la checklist associée, conformément au modèle de données.
-     * Utiliser : $audit->norme ou $audit->checklist->norme
+     * Les normes couvertes par cet audit.
+     * Les normes NE SONT PAS stockées directement sur l'audit — elles sont toujours
+     * dérivées des checklists associées.
+     * Utiliser : $audit->normes
      */
-    public function getNormeAttribute()
+    public function getNormesAttribute()
     {
-        return $this->checklist?->norme;
+        return $this->checklists->pluck('norme')->filter()->unique('id')->values();
     }
 
     /**

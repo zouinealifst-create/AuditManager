@@ -245,7 +245,7 @@ export default function ChecklistCreate({ onCreated, onCancel } = {}) {
 
   // ── Rendu ────────────────────────────────────────────────
   return (
-    <div className="container">
+    <div className="container" style={{ width: '100%', maxWidth: '100%', margin: 0, overflowX: 'hidden' }}>
       {/* En-tête */}
       <div className="section-header">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -261,7 +261,7 @@ export default function ChecklistCreate({ onCreated, onCancel } = {}) {
                 fontSize: '0.85rem', color: 'var(--color-text-muted)', cursor: 'pointer',
               }}
             >
-              ← Retour à la liste
+              Fermer ✕
             </button>
           )}
         </div>
