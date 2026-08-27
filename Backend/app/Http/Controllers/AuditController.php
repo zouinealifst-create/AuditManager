@@ -20,8 +20,8 @@ class AuditController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Audit::with([
-            'checklist:id,titre,norme_id',
-            'checklist.norme:id,code,nom',
+            'checklists:id,titre,norme_id',
+            'checklists.norme:id,code,nom',
             'departement:id,nom',
             'auditeur:id,name',
             'responsableQualite:id,name',
@@ -56,20 +56,26 @@ class AuditController extends Controller
         }
 
         $validated = $request->validate([
-            'checklist_id'   => 'required|integer|exists:checklists,id',
+            'checklist_ids'   => 'required|array|min:1',
+            'checklist_ids.*' => 'integer|exists:checklists,id',
             'titre'          => 'required|string|max:255',
             'departement_id' => 'nullable|integer|exists:departements,id',
             'auditeur_id'    => 'nullable|integer|exists:users,id',
             'date_prevue'    => 'nullable|date',
         ]);
+        
+        $checklistIds = $validated['checklist_ids'];
+        unset($validated['checklist_ids']);
 
         $validated['responsable_qualite_id'] = $request->user()->id;
         $validated['statut'] = 'brouillon';
 
         $audit = Audit::create($validated);
+        $audit->checklists()->sync($checklistIds);
+        
         $audit->load([
-            'checklist:id,titre,norme_id',
-            'checklist.norme:id,code,nom',
+            'checklists:id,titre,norme_id',
+            'checklists.norme:id,code,nom',
             'departement:id,nom',
             'auditeur:id,name',
             'responsableQualite:id,name',
@@ -88,9 +94,9 @@ class AuditController extends Controller
     public function show(int $id): JsonResponse
     {
         $audit = Audit::with([
-            'checklist:id,titre,norme_id',
-            'checklist.norme:id,code,nom',
-            'checklist.questions',
+            'checklists:id,titre,norme_id',
+            'checklists.norme:id,code,nom',
+            'checklists.questions',
             'departement:id,nom',
             'auditeur:id,name',
             'responsableQualite:id,name',
@@ -133,7 +139,7 @@ class AuditController extends Controller
 
         // Bloquer toute modification du titre ou de la checklist une fois sorti du brouillon
         if ($audit->statut !== 'brouillon' &&
-            ($request->has('titre') || $request->has('checklist_id'))) {
+            ($request->has('titre') || $request->has('checklist_ids'))) {
             return response()->json([
                 'success' => false,
                 'message' => 'Impossible de modifier le titre ou la checklist après le démarrage de la planification.',
@@ -141,7 +147,8 @@ class AuditController extends Controller
         }
 
         $validated = $request->validate([
-            'checklist_id'   => 'sometimes|required|integer|exists:checklists,id',
+            'checklist_ids'   => 'sometimes|required|array|min:1',
+            'checklist_ids.*' => 'integer|exists:checklists,id',
             'titre'          => 'sometimes|required|string|max:255',
             'departement_id' => 'nullable|integer|exists:departements,id',
             'auditeur_id'    => 'nullable|integer|exists:users,id',
@@ -149,9 +156,13 @@ class AuditController extends Controller
         ]);
 
         $audit->update($validated);
+        if ($request->has('checklist_ids')) {
+            $audit->checklists()->sync($request->input('checklist_ids'));
+        }
+
         $audit->load([
-            'checklist:id,titre,norme_id',
-            'checklist.norme:id,code,nom',
+            'checklists:id,titre,norme_id',
+            'checklists.norme:id,code,nom',
             'departement:id,nom',
             'auditeur:id,name',
             'responsableQualite:id,name',
@@ -243,8 +254,8 @@ class AuditController extends Controller
 
         $audit->update(array_merge($validated, ['statut' => 'planifie']));
         $audit->load([
-            'checklist:id,titre,norme_id',
-            'checklist.norme:id,code,nom',
+            'checklists:id,titre,norme_id',
+            'checklists.norme:id,code,nom',
             'departement:id,nom',
             'auditeur:id,name',
             'responsableQualite:id,name',

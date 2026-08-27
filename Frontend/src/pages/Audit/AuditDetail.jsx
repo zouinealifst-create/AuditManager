@@ -13,8 +13,14 @@
  *   auditId      — ID de l'audit à afficher
  *   onBack()     — retour à la liste
  *   onRefresh()  — demander un rechargement de la liste
+ *
+ * Migration RTK Query :
+ *   • useGetAuditQuery           → cache 5 min, refetch automatique via invalidation
+ *   • usePlanifierAuditMutation  → invalide le détail + la liste
+ *   • useDemarrerAuditMutation   → invalide le détail + la liste
+ *   • useCloturerAuditMutation   → invalide le détail + la liste
+ *   Le reload() manuel est remplacé par l'invalidation de cache après mutation.
  */
-import { useState, useEffect } from 'react'
 import { Spinner, Alert } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -24,7 +30,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { motion } from 'framer-motion'
 import Swal from 'sweetalert2'
-import { getAudit, planifierAudit, demarrerAudit, cloturerAudit } from '../../api/audits'
+import { useGetAuditQuery, usePlanifierAuditMutation, useDemarrerAuditMutation, useCloturerAuditMutation } from '../../store/api/auditsApi'
 import './AuditDetail.css'
 
 const STATUT_CONFIG = {
@@ -45,27 +51,21 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-export default function AuditDetail({ auditId, onBack, onRefresh, defaultAction }) {
-  const [audit,    setAudit]    = useState(null)
-  const [loading,  setLoading]  = useState(true)
-  const [error,    setError]    = useState('')
-  const [actioning,setActioning]= useState(false)
+export default function AuditDetail({ auditId, onBack, onRefresh }) {
+  // ── Données RTK Query ────────────────────────────────────────
+  // getAuditQuery : cache 5 min, invalidé automatiquement après chaque mutation
+  const {
+    data: audit,
+    isLoading: loading,
+    isError,
+  } = useGetAuditQuery(auditId)
 
-  useEffect(() => {
-    setLoading(true)
-    getAudit(auditId)
-      .then(data => setAudit(data))
-      .catch(() => setError('Impossible de charger l\'audit.'))
-      .finally(() => setLoading(false))
-  }, [auditId])
+  // ── Mutations ────────────────────────────────────────────────
+  const [planifierAudit, { isLoading: planifying }] = usePlanifierAuditMutation()
+  const [demarrerAudit,  { isLoading: demarring  }] = useDemarrerAuditMutation()
+  const [cloturerAudit,  { isLoading: cloturing  }] = useCloturerAuditMutation()
 
-  const reload = () => {
-    setLoading(true)
-    getAudit(auditId)
-      .then(data => { setAudit(data); onRefresh?.() })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }
+  const actioning = planifying || demarring || cloturing
 
   // ── Action : Planifier ──
   const handlePlanifier = async () => {
@@ -83,19 +83,18 @@ export default function AuditDetail({ auditId, onBack, onRefresh, defaultAction 
       confirmButtonColor: '#1d4ed8',
     })
     if (!result.isConfirmed) return
-    setActioning(true)
     try {
-      await planifierAudit(audit.id, {
+      await planifierAudit({
+        id:             audit.id,
         date_prevue:    audit.date_prevue,
         departement_id: audit.departement_id,
         auditeur_id:    audit.auditeur_id,
-      })
-      await reload()
+      }).unwrap()
+      // Le cache du détail et de la liste sont automatiquement invalidés
+      onRefresh?.()
       Swal.fire({ icon: 'success', title: 'Planifié !', timer: 1600, showConfirmButton: false })
     } catch (e) {
-      Swal.fire('Erreur', e.response?.data?.message ?? 'Erreur lors de la planification.', 'error')
-    } finally {
-      setActioning(false)
+      Swal.fire('Erreur', e.data?.message ?? 'Erreur lors de la planification.', 'error')
     }
   }
 
@@ -111,15 +110,12 @@ export default function AuditDetail({ auditId, onBack, onRefresh, defaultAction 
       confirmButtonColor: '#d97706',
     })
     if (!result.isConfirmed) return
-    setActioning(true)
     try {
-      await demarrerAudit(audit.id)
-      await reload()
+      await demarrerAudit(audit.id).unwrap()
+      onRefresh?.()
       Swal.fire({ icon: 'success', title: 'Démarré !', timer: 1600, showConfirmButton: false })
     } catch (e) {
-      Swal.fire('Erreur', e.response?.data?.message ?? 'Erreur lors du démarrage.', 'error')
-    } finally {
-      setActioning(false)
+      Swal.fire('Erreur', e.data?.message ?? 'Erreur lors du démarrage.', 'error')
     }
   }
 
@@ -135,15 +131,12 @@ export default function AuditDetail({ auditId, onBack, onRefresh, defaultAction 
       confirmButtonColor: '#7c3aed',
     })
     if (!result.isConfirmed) return
-    setActioning(true)
     try {
-      await cloturerAudit(audit.id)
-      await reload()
+      await cloturerAudit(audit.id).unwrap()
+      onRefresh?.()
       Swal.fire({ icon: 'success', title: 'Clôturé !', timer: 1600, showConfirmButton: false })
     } catch (e) {
-      Swal.fire('Erreur', e.response?.data?.message ?? 'Erreur lors de la clôture.', 'error')
-    } finally {
-      setActioning(false)
+      Swal.fire('Erreur', e.data?.message ?? 'Erreur lors de la clôture.', 'error')
     }
   }
 
@@ -156,11 +149,11 @@ export default function AuditDetail({ auditId, onBack, onRefresh, defaultAction 
     )
   }
 
-  if (error || !audit) {
-    return <Alert variant="danger" className="m-4">{error || 'Audit introuvable.'}</Alert>
+  if (isError || !audit) {
+    return <Alert variant="danger" className="m-4">{'Impossible de charger l\'audit.'}</Alert>
   }
 
-  const questions = audit.checklist?.questions ?? []
+  const totalQuestions = audit.checklists?.reduce((acc, cl) => acc + (cl.questions?.length || 0), 0) || 0
 
   return (
     <motion.div
@@ -219,13 +212,15 @@ export default function AuditDetail({ auditId, onBack, onRefresh, defaultAction 
           <div className="ad-card-body">
             <div className="ad-info-grid">
               <div className="ad-info-item">
-                <span className="ad-info-label">Checklist</span>
-                <span className="ad-info-value">{audit.checklist?.titre ?? '—'}</span>
+                <span className="ad-info-label">Checklist(s)</span>
+                <span className="ad-info-value">{audit.checklists?.map(c => c.titre).join(' / ') || '—'}</span>
               </div>
               <div className="ad-info-item">
-                <span className="ad-info-label">Norme</span>
+                <span className="ad-info-label">Norme(s)</span>
                 <span className="ad-info-value code">
-                  {audit.checklist?.norme?.code ?? '—'}
+                  {audit.checklists && audit.checklists.length > 0
+                    ? Array.from(new Set(audit.checklists.map(c => c.norme?.code).filter(Boolean))).join(', ')
+                    : '—'}
                 </span>
               </div>
               <div className="ad-info-item">
@@ -279,7 +274,7 @@ export default function AuditDetail({ auditId, onBack, onRefresh, defaultAction 
             <div className="ad-progress-section">
               <div className="ad-progress-header">
                 <span>Questions répondues</span>
-                <span>— / {questions.length}</span>
+                <span>— / {totalQuestions}</span>
               </div>
               <div className="ad-progress-bar">
                 <div className="ad-progress-fill" style={{ width: '0%' }} />
@@ -298,25 +293,40 @@ export default function AuditDetail({ auditId, onBack, onRefresh, defaultAction 
               <FontAwesomeIcon icon={faListCheck} />
             </div>
             <h2 className="ad-card-title">
-              Questions de la checklist ({questions.length})
+              Questions ({totalQuestions})
             </h2>
           </div>
           <div className="ad-card-body">
-            {questions.length === 0 ? (
+            {!audit.checklists || audit.checklists.length === 0 ? (
               <div className="ad-empty-questions">
-                Aucune question dans cette checklist.
+                Aucune checklist associée à cet audit.
+              </div>
+            ) : totalQuestions === 0 ? (
+              <div className="ad-empty-questions">
+                Aucune question dans les checklists associées.
               </div>
             ) : (
               <div className="ad-questions-list">
-                {questions.map((q, i) => (
-                  <div key={q.id} className="ad-question-item">
-                    <div className="ad-question-num">{i + 1}</div>
-                    <div>
-                      <div className="ad-question-text">{q.texte}</div>
-                      {q.type && (
-                        <div className="ad-question-type">Type : {q.type}</div>
-                      )}
-                    </div>
+                {audit.checklists.map((cl) => (
+                  <div key={cl.id} className="mb-4">
+                    <h6 className="fw-bold mb-3" style={{ color: 'var(--color-primary, #3a8a90)' }}>
+                      {cl.titre} {cl.norme ? `(${cl.norme.code})` : ''}
+                    </h6>
+                    {cl.questions?.length > 0 ? (
+                      cl.questions.map((q, i) => (
+                        <div key={q.id} className="ad-question-item">
+                          <div className="ad-question-num">{i + 1}</div>
+                          <div>
+                            <div className="ad-question-text">{q.texte}</div>
+                            {q.type && (
+                              <div className="ad-question-type">Type : {q.type}</div>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-muted small ms-2 mb-2">Aucune question</div>
+                    )}
                   </div>
                 ))}
               </div>

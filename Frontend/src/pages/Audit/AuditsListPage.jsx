@@ -12,9 +12,14 @@
  *   • Tableau : titre, checklist, norme, département, auditeur, date, statut, actions
  *   • Actions : Voir détails / Planifier (si brouillon) / Supprimer
  *   • Bouton "+ Nouvel Audit" → prop onNew()
+ *
+ * Migration RTK Query :
+ *   • useGetDepartementsQuery  → liste des départements (cache 10 min)
+ *   • useGetAuditsQuery        → audits paginés/filtrés (cache 2 min)
+ *   • useDeleteAuditMutation   → suppression avec invalidation automatique de la liste
  */
-import { useState, useEffect, useMemo } from 'react'
-import { Spinner, Alert } from 'react-bootstrap'
+import { useState, useMemo, useEffect } from 'react'
+import { Spinner, Alert, Modal } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faClipboardCheck, faPlus, faSearch, faEye, faCalendarCheck,
@@ -22,8 +27,10 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { motion, AnimatePresence } from 'framer-motion'
 import Swal from 'sweetalert2'
-import { getAudits, deleteAudit } from '../../api/audits'
-import { getDepartements } from '../../api/departements'
+import { useGetAuditsQuery, useDeleteAuditMutation } from '../../store/api/auditsApi'
+import { useGetDepartementsQuery } from '../../store/api/departementsApi'
+import AuditCreate from './AuditCreate'
+import AuditDetail from './AuditDetail'
 import './AuditsListPage.css'
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -47,44 +54,43 @@ function formatDate(iso) {
 }
 
 // ── Composant principal ──────────────────────────────────────
-export default function AuditsListPage({ onNew, onView }) {
-  const [audits,      setAudits]      = useState([])
-  const [departements,setDepartements]= useState([])
-  const [selectedDept,setSelectedDept]= useState(null) // null = tous
-  const [loading,     setLoading]     = useState(true)
-  const [error,       setError]       = useState('')
-  const [search,      setSearch]      = useState('')
-  const [filterStatut,setFilterStatut]= useState('')
-  const [page,        setPage]        = useState(1)
-  const [lastPage,    setLastPage]    = useState(1)
-  const [total,       setTotal]       = useState(0)
+export default function AuditsListPage() {
+  const [panelOpen,     setPanelOpen]     = useState(false)
+  const [modalMode,     setModalMode]     = useState(null) // null | 'detail'
+  const [selectedAudit, setSelectedAudit] = useState(null)
 
-  // ── Charger départements une seule fois ──
-  useEffect(() => {
-    getDepartements()
-      .then(data => setDepartements(Array.isArray(data) ? data : []))
-      .catch(() => {})
-  }, [])
+  const [selectedDept,  setSelectedDept]  = useState(null) // null = tous
+  const [search,        setSearch]        = useState('')
+  const [filterStatut,  setFilterStatut]  = useState('')
+  const [page,          setPage]          = useState(1)
 
-  // ── Charger audits à chaque changement de filtre/page ──
-  useEffect(() => {
-    setLoading(true)
-    setError('')
-    const params = { page }
-    if (selectedDept)  params.departement_id = selectedDept
-    if (filterStatut)  params.statut         = filterStatut
+  // ── Données RTK Query ────────────────────────────────────────
+  // getDepartements : cache 10 min, aucun re-fetch inutile entre navigations
+  const {
+    data: departements = [],
+    isLoading: loadingDepts,
+  } = useGetDepartementsQuery()
 
-    getAudits(params)
-      .then(res => {
-        setAudits(res.data ?? [])
-        setLastPage(res.last_page ?? 1)
-        setTotal(res.total ?? 0)
-      })
-      .catch(() => setError('Impossible de charger les audits.'))
-      .finally(() => setLoading(false))
-  }, [selectedDept, filterStatut, page])
+  // getAudits : cache 2 min, invalidé automatiquement après deleteAudit
+  const {
+    data: auditsPage,
+    isLoading: loadingAudits,
+    isError: errorAudits,
+    isFetching,
+  } = useGetAuditsQuery({
+    page,
+    departement_id: selectedDept ?? undefined,
+    statut:         filterStatut || undefined,
+  })
 
-  // Remet la page à 1 quand les filtres changent
+  const audits   = auditsPage?.data     ?? []
+  const lastPage = auditsPage?.last_page ?? 1
+  const total    = auditsPage?.total     ?? 0
+
+  // ── Mutation suppression ─────────────────────────────────────
+  const [deleteAudit] = useDeleteAuditMutation()
+
+  // Remet page à 1 quand filtre change
   const handleDeptChange = (id) => {
     setSelectedDept(id)
     setPage(1)
@@ -100,7 +106,7 @@ export default function AuditsListPage({ onNew, onView }) {
     const q = search.toLowerCase()
     return audits.filter(a =>
       a.titre?.toLowerCase().includes(q) ||
-      a.checklist?.titre?.toLowerCase().includes(q) ||
+      a.checklists?.some(c => c.titre?.toLowerCase().includes(q)) ||
       a.auditeur?.name?.toLowerCase().includes(q) ||
       a.departement?.nom?.toLowerCase().includes(q)
     )
@@ -119,14 +125,15 @@ export default function AuditsListPage({ onNew, onView }) {
     })
     if (!result.isConfirmed) return
     try {
-      await deleteAudit(audit.id)
-      setAudits(prev => prev.filter(a => a.id !== audit.id))
+      await deleteAudit(audit.id).unwrap()
+      // La liste est automatiquement rafraîchie via invalidatesTags: ['Audit', 'LIST']
       Swal.fire({ icon: 'success', title: 'Supprimé !', text: 'Audit supprimé avec succès.', timer: 1800, showConfirmButton: false })
     } catch {
       Swal.fire('Erreur', 'Impossible de supprimer l\'audit.', 'error')
     }
   }
 
+  const loading  = loadingAudits || loadingDepts
   const deptLabel = selectedDept
     ? departements.find(d => d.id === selectedDept)?.nom ?? `Département #${selectedDept}`
     : 'Tous les départements'
@@ -138,7 +145,7 @@ export default function AuditsListPage({ onNew, onView }) {
         <div className="au-dept-header">Départements</div>
         <div className="au-dept-list">
           <div
-            className={`au-dept-item au-dept-all ${selectedDept === null ? 'active' : ''}`}
+            className={`au-dept-item ${selectedDept === null ? 'active' : ''}`}
             onClick={() => handleDeptChange(null)}
           >
             <span className="au-dept-icon">🗂</span>
@@ -167,10 +174,15 @@ export default function AuditsListPage({ onNew, onView }) {
             </div>
             <div>
               <h1 className="au-page-title">Audits</h1>
-              <p className="au-page-sub">{deptLabel} · {total} audit{total !== 1 ? 's' : ''}</p>
+              <p className="au-page-sub">
+                {deptLabel} · {total} audit{total !== 1 ? 's' : ''}
+                {isFetching && !loading && (
+                  <Spinner size="sm" animation="border" className="ms-2" style={{ width: '0.8rem', height: '0.8rem', color: 'var(--color-primary)' }} />
+                )}
+              </p>
             </div>
           </div>
-          <button className="au-btn-new" onClick={onNew}>
+          <button className="au-btn-new" onClick={() => setPanelOpen(true)}>
             <FontAwesomeIcon icon={faPlus} />
             Nouvel Audit
           </button>
@@ -201,7 +213,7 @@ export default function AuditsListPage({ onNew, onView }) {
 
         {/* Corps */}
         <div className="au-body">
-          {error && <Alert variant="danger">{error}</Alert>}
+          {errorAudits && <Alert variant="danger">Impossible de charger les audits.</Alert>}
 
           {loading ? (
             <div className="au-loading">
@@ -212,7 +224,7 @@ export default function AuditsListPage({ onNew, onView }) {
             <div className="au-empty">
               <FontAwesomeIcon icon={faClipboardCheck} className="au-empty-icon" />
               <span>Aucun audit trouvé.</span>
-              <button className="au-btn-new" style={{ marginTop: '0.5rem' }} onClick={onNew}>
+              <button className="au-btn-new" style={{ marginTop: '0.5rem' }} onClick={() => setPanelOpen(true)}>
                 <FontAwesomeIcon icon={faPlus} />
                 Créer le premier audit
               </button>
@@ -224,7 +236,7 @@ export default function AuditsListPage({ onNew, onView }) {
                   <thead>
                     <tr>
                       <th>Titre</th>
-                      <th>Checklist / Norme</th>
+                      <th>Checklists / Normes</th>
                       <th>Département</th>
                       <th>Auditeur</th>
                       <th>Date prévue</th>
@@ -248,9 +260,11 @@ export default function AuditsListPage({ onNew, onView }) {
                             <div className="au-audit-sub">#{audit.id}</div>
                           </td>
                           <td>
-                            <div>{audit.checklist?.titre ?? '—'}</div>
-                            {audit.checklist?.norme && (
-                              <div className="au-norme-code">{audit.checklist.norme.code}</div>
+                            <div>{audit.checklists?.map(c => c.titre).join(' / ') || '—'}</div>
+                            {audit.checklists && audit.checklists.length > 0 && (
+                              <div className="au-norme-code">
+                                {Array.from(new Set(audit.checklists.map(c => c.norme?.code).filter(Boolean))).join(', ')}
+                              </div>
                             )}
                           </td>
                           <td>{audit.departement?.nom ?? '—'}</td>
@@ -271,7 +285,7 @@ export default function AuditsListPage({ onNew, onView }) {
                               <button
                                 className="au-action-btn au-action-view"
                                 title="Voir détails"
-                                onClick={() => onView?.(audit)}
+                                onClick={() => { setSelectedAudit(audit); setModalMode('detail'); }}
                               >
                                 <FontAwesomeIcon icon={faEye} />
                               </button>
@@ -279,7 +293,7 @@ export default function AuditsListPage({ onNew, onView }) {
                                 <button
                                   className="au-action-btn au-action-plan"
                                   title="Planifier"
-                                  onClick={() => onView?.(audit, 'planifier')}
+                                  onClick={() => { setSelectedAudit(audit); setModalMode('detail'); }}
                                 >
                                   <FontAwesomeIcon icon={faCalendarCheck} />
                                 </button>
@@ -328,6 +342,43 @@ export default function AuditsListPage({ onNew, onView }) {
           )}
         </div>
       </div>
+
+      {/* ── Modale de Création (Audit) ── */}
+      <Modal
+        show={panelOpen}
+        onHide={() => setPanelOpen(false)}
+        size="xl"
+        centered
+        scrollable
+        dialogClassName="au-modal-dialog"
+      >
+        <Modal.Body className="p-0" style={{ background: '#f8fafc' }}>
+          <AuditCreate
+            onCancel={() => setPanelOpen(false)}
+            onCreated={() => setPanelOpen(false)}
+          />
+        </Modal.Body>
+      </Modal>
+
+      {/* ── Modale de Détail ── */}
+      <Modal
+        show={modalMode === 'detail'}
+        onHide={() => { setModalMode(null); setSelectedAudit(null); }}
+        size="xl"
+        centered
+        scrollable
+        dialogClassName="au-modal-dialog"
+      >
+        <Modal.Body className="p-0" style={{ background: '#f8fafc' }}>
+          {modalMode === 'detail' && selectedAudit && (
+            <AuditDetail
+              auditId={selectedAudit.id}
+              onBack={() => { setModalMode(null); setSelectedAudit(null); }}
+            />
+          )}
+        </Modal.Body>
+      </Modal>
+
     </div>
   )
 }

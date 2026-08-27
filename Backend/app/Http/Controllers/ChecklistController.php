@@ -27,6 +27,17 @@ class ChecklistController extends Controller
             $query->where('norme_id', $request->input('norme_id'));
         }
 
+        if ($request->filled('departement_id')) {
+            $departement = \App\Models\Departement::find($request->input('departement_id'));
+            if ($departement && $departement->secteur_id) {
+                $query->whereHas('norme.secteurs', function ($q) use ($departement) {
+                    $q->where('secteurs.id', $departement->secteur_id);
+                });
+            } else {
+                $query->whereRaw('1 = 0'); // département sans secteur -> aucune checklist
+            }
+        }
+
         $checklists = $query->latest()->paginate(15);
 
         return response()->json([

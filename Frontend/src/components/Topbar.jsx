@@ -13,8 +13,7 @@ function Topbar({ title }) {
     }
 
     return (
-        <div className="topbar d-flex align-items-center justify-content-between px-4">
-        <h5 className="mb-0">{title}</h5>
+        <div className="topbar d-flex align-items-center justify-content-end px-4">
 
         <div className="d-flex align-items-center gap-3">
             <span className="text-muted">{user?.name}</span>

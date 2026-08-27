@@ -43,4 +43,12 @@ class Checklist extends Model
     {
         return $this->belongsTo(User::class, 'cree_par');
     }
+
+    /**
+     * Les audits basés sur cette checklist.
+     */
+    public function audits()
+    {
+        return $this->belongsToMany(Audit::class, 'audit_checklist')->withTimestamps();
+    }
 }
