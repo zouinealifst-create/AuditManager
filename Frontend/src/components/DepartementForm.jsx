@@ -34,8 +34,8 @@ export default function DepartementForm({ initialData, onClose, onSaved }) {
     getUsers({ per_page: 100 })
       .then((data) => {
         const list = Array.isArray(data) ? data : data?.data ?? []
-        // On ne garde que les utilisateurs ayant le rôle "Responsable Département"
-        const responsables = list.filter((u) => u.role?.name === 'Responsable Département')
+        const ROLES_RESPONSABLES = ['Responsable Département', 'Responsable Qualité']
+        const responsables = list.filter((u) => ROLES_RESPONSABLES.includes(u.role?.name))
         setUsers(responsables)
       })
       .catch(() => setUsers([]))

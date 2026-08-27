@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faPlus, faFilter, faPen, faTrash, faFolder, faFolderOpen,
+  faPlus, faPen, faTrash, faFolder, faFolderOpen,
   faChevronLeft, faChevronRight, faUserShield, faPowerOff,
 } from '@fortawesome/free-solid-svg-icons'
 import { AnimatePresence } from 'framer-motion'
@@ -183,9 +183,6 @@ function Users() {
             </div>
 
             <div className="dp-header-actions">
-              <button className="dp-filter-icon" title="Filtres">
-                <FontAwesomeIcon icon={faFilter} />
-              </button>
               <button className="dp-add-btn" onClick={openAdd}>
                 <FontAwesomeIcon icon={faPlus} />
                 Ajouter Utilisateur
