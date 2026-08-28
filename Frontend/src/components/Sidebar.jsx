@@ -3,15 +3,15 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useAuth } from '../context/AuthContext'
 
 import {
-  faHouse,
-  faBuilding,
-  faSitemap,
-  faUsers,
-  faClipboardList,
-  faClipboardCheck,
-  faRightFromBracket,
-  faUserShield,
-  faChartLine
+    faHouse,
+    faBuilding,
+    faSitemap,
+    faUsers,
+    faClipboardList,
+    faClipboardCheck,
+    faRightFromBracket,
+    faUserShield,
+    faChartLine
 } from '@fortawesome/free-solid-svg-icons'
 
 function Sidebar() {
@@ -19,12 +19,11 @@ function Sidebar() {
     const navigate = useNavigate()
 
     const menuItems = [
-        { path: '/dashboard', label: 'Accueil', icon: faHouse },
+        { path: '/dashboard', label: 'Dashboard', icon: faHouse },
         { path: '/dashboard-rq', label: 'Dashboard RQ', icon: faChartLine },
         { path: '/entreprise', label: 'Mon entreprise', icon: faBuilding },
         { path: '/departements', label: 'Départements', icon: faSitemap },
         { path: '/users', label: 'Utilisateurs', icon: faUsers },
-        { path: '/roles', label: 'Rôles', icon: faUserShield },
         { path: '/checklists', label: 'Checklists', icon: faClipboardList },
         { path: '/audits', label: 'Historique des audits', icon: faClipboardCheck },
     ]

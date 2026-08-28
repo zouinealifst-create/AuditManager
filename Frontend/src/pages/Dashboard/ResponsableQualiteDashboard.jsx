@@ -16,9 +16,16 @@ import { useGetAllNormesQuery } from '../../store/api/normesApi'
 import { useGetNonConformitesQuery } from '../../store/api/nonConformitesApi'
 
 import KpiCard from '../../components/dashboard/KpiCard'
+import { useAuth } from '../../context/AuthContext'
 import './ResponsableQualiteDashboard.css'
 
+function formatDate(iso) {
+    if (!iso) return '—'
+    return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
 const ResponsableQualiteDashboard = () => {
+  const { user } = useAuth()
   // Filtre Département
   const [selectedDeptId, setSelectedDeptId] = useState('')
 
@@ -98,14 +105,39 @@ const ResponsableQualiteDashboard = () => {
       className="dashboard-container py-4"
     >
       <Container fluid>
-        {/* Header & Filtres */}
-        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-          <div>
-            <h2 className="mb-0 fw-bold text-navy">Dashboard Qualité</h2>
-            <p className="text-muted mb-0">Vue globale des processus d'audit et d'amélioration continue.</p>
+        {/* ── Hero ── */}
+        <div className="db-hero mb-4">
+          <div className="db2-hero-text">
+            <span className="db2-hero-eyebrow">Vue d'ensemble</span>
+            <h1 className="db2-hero-title">Dashboard Qualité</h1>
+            <p className="db2-hero-sub">
+              Connecté en tant que <strong>{user?.name || 'Responsable Qualité'}</strong> · {formatDate(new Date().toISOString())}
+            </p>
           </div>
-          
-          <div className="d-flex align-items-center gap-3">
+          <div className="db2-hero-stats">
+            <div className="db2-hero-stat">
+              <div className="db2-hero-stat-value">{isLoadingAudits ? '-' : auditsStats.total}</div>
+              <div className="db2-hero-stat-label">Audits</div>
+            </div>
+            <div className="db2-hero-stat">
+              <div className="db2-hero-stat-value">{isLoadingChecklists ? '-' : checklistsStats.total}</div>
+              <div className="db2-hero-stat-label">Checklists</div>
+            </div>
+            <div className="db2-hero-stat">
+              <div className="db2-hero-stat-value">{isLoadingNc ? '-' : ncStats.total}</div>
+              <div className="db2-hero-stat-label">Non-conformités</div>
+            </div>
+            <div className="db2-hero-stat">
+              <div className="db2-hero-stat-value">-</div>
+              <div className="db2-hero-stat-label">Actions correctives</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filtres */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h5 className="fw-bold text-navy mb-0">Indicateurs Détaillés</h5>
+          <div className="d-flex align-items-center">
             <Form.Group className="d-flex align-items-center mb-0">
               <Form.Label className="me-2 mb-0 fw-semibold text-muted text-nowrap">Département :</Form.Label>
               <Form.Select 
@@ -123,49 +155,6 @@ const ResponsableQualiteDashboard = () => {
             </Form.Group>
           </div>
         </div>
-
-        {/* Ligne 1 : KPIs */}
-        <Row className="mb-4 g-3">
-          <Col md={6} lg={3}>
-            <KpiCard 
-              title="Audits" 
-              value={auditsStats.total} 
-              subtitle={`${auditsStats.enCours} en cours`} 
-              icon={faClipboardList} 
-              color="primary"
-              loading={isLoadingAudits}
-            />
-          </Col>
-          <Col md={6} lg={3}>
-            <KpiCard 
-              title="Checklists" 
-              value={checklistsStats.total} 
-              subtitle={`${checklistsStats.actives} actives`} 
-              icon={faCheckSquare} 
-              color="success"
-              loading={isLoadingChecklists}
-            />
-          </Col>
-          <Col md={6} lg={3}>
-            <KpiCard 
-              title="Non-conformités" 
-              value={ncStats.total} 
-              subtitle={`${ncStats.ouvertes} ouvertes/en cours`} 
-              icon={faExclamationTriangle} 
-              color="warning"
-              loading={isLoadingNc}
-            />
-          </Col>
-          <Col md={6} lg={3}>
-            <KpiCard 
-              title="Actions correctives" 
-              value="-" 
-              subtitle="Données non disponibles ⚠️" 
-              icon={faWrench} 
-              color="danger"
-            />
-          </Col>
-        </Row>
 
         <Row className="mb-4 g-4">
           {/* Suivi des Audits (Graphique CSS / Barres) */}
