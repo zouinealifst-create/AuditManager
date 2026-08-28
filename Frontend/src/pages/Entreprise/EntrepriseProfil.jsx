@@ -18,7 +18,7 @@ import {
   faToggleOn,
   faIndustry,
 } from '@fortawesome/free-solid-svg-icons'
-import { getEntreprise, updateEntreprise } from '../../services/entrepriseService'
+import { useGetEntrepriseQuery, useUpdateEntrepriseMutation } from '../../store/api/entreprisesApi'
 import EntrepriseCard from '../../components/EntrepriseCard'
 import './EntrepriseProfil.css'
 
@@ -70,42 +70,34 @@ function FormField({ icon, label, error, children }) {
 }
 
 function EntrepriseProfil() {
-  const [entreprise, setEntreprise] = useState(null)
+  const { data: entreprise, isLoading: fetching } = useGetEntrepriseQuery()
+  const [updateEntreprise, { isLoading: loading }] = useUpdateEntrepriseMutation()
+
+
   const [editMode, setEditMode] = useState(false)
   const [activeTab, setActiveTab] = useState('general')
   const [form, setForm] = useState(EMPTY_FORM)
   const [logoFile, setLogoFile] = useState(null)
   const [logoPreview, setLogoPreview] = useState(null)
   const [errors, setErrors] = useState({})
-  const [loading, setLoading] = useState(false)
-  const [fetching, setFetching] = useState(true)
   const [globalError, setGlobalError] = useState('')
 
-  const fetchEntreprise = async () => {
-    setFetching(true)
-    try {
-      const data = await getEntreprise()
-      setEntreprise(data.data)
-      setForm({
-        nom: data.data.nom || '',
-        description: data.data.description || '',
-        adresse: data.data.adresse || '',
-        telephone: data.data.telephone || '',
-        email: data.data.email || '',
-        secteur_activite: data.data.secteur_activite || '',
-        statut: data.data.statut || 'actif',
-        ice: data.data.ice || '',
-        registre_commerce: data.data.registre_commerce || '',
-        site_web: data.data.site_web || '',
-      })
-    } finally {
-      setFetching(false)
-    }
-  }
-
+  // Pré-remplir le formulaire dès que les données arrivent
   useEffect(() => {
-    fetchEntreprise()
-  }, [])
+    if (!entreprise) return
+    setForm({
+      nom: entreprise.nom || '',
+      description: entreprise.description || '',
+      adresse: entreprise.adresse || '',
+      telephone: entreprise.telephone || '',
+      email: entreprise.email || '',
+      secteur_activite: entreprise.secteur_activite || '',
+      statut: entreprise.statut || 'actif',
+      ice: entreprise.ice || '',
+      registre_commerce: entreprise.registre_commerce || '',
+      site_web: entreprise.site_web || '',
+    })
+  }, [entreprise])
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -124,25 +116,22 @@ function EntrepriseProfil() {
     e.preventDefault()
     setErrors({})
     setGlobalError('')
-    setLoading(true)
+
 
     const payload = { ...form }
     if (logoFile) payload.logo = logoFile
 
     try {
-      await updateEntreprise(payload)
-      await fetchEntreprise()
+      await updateEntreprise(payload).unwrap()
       setEditMode(false)
       setLogoFile(null)
       setLogoPreview(null)
     } catch (err) {
-      if (err.response?.status === 422) {
-        setErrors(err.response.data.errors)
+      if (err.status === 422) {
+        setErrors(err.data?.errors || {})
       } else {
         setGlobalError('Une erreur est survenue.')
       }
-    } finally {
-      setLoading(false)
     }
   }
 
