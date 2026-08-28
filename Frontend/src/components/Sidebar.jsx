@@ -19,7 +19,7 @@ function Sidebar() {
     const navigate = useNavigate()
 
     const menuItems = [
-        { path: '/dashboard', label: 'Dashboard', icon: faHouse },
+        { path: '/dashboard', label: 'Dashboard admin', icon: faChartLine },
         { path: '/dashboard-rq', label: 'Dashboard RQ', icon: faChartLine },
         { path: '/entreprise', label: 'Mon entreprise', icon: faBuilding },
         { path: '/departements', label: 'Départements', icon: faSitemap },
