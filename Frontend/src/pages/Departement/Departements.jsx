@@ -6,38 +6,23 @@ import {
     faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
 import { AnimatePresence } from 'framer-motion'
-import { getDepartements, deleteDepartement } from '../../services/departementService'
+import { useGetDepartementsQuery, useDeleteDepartementMutation } from '../../store/api/departementsApi'
 
 import DepartementForm from '../../components/DepartementForm'
 import './Departements.css'
 
 function Departements() {
-    const [allDepartements, setAllDepartements] = useState([])
-    const [loading, setLoading] = useState(true)
+    const { data: allDepartements = [], isLoading: loading } = useGetDepartementsQuery({ per_page: 100 })
+    const [deleteDepartement] = useDeleteDepartementMutation()
+
     const [selected, setSelected] = useState([])
     const [showForm, setShowForm] = useState(false)
     const [editingItem, setEditingItem] = useState(null)
     const [activeFilter, setActiveFilter] = useState({ type: 'all' })
     const [page, setPage] = useState(1)
     const [rowsPerPage, setRowsPerPage] = useState(10)
-    // Ids des groupes (secteurs) repliés. Un groupe absent de ce Set = déplié.
     const [collapsedGroups, setCollapsedGroups] = useState(new Set())
 
-    const fetchDepartements = async () => {
-        setLoading(true)
-        try {
-        const data = await getDepartements({ per_page: 100 })
-        setAllDepartements(data.data)
-        } finally {
-        setLoading(false)
-        }
-    }
-
-  useEffect(() => {
-    fetchDepartements()
-  }, [])
-
-  // ── Groupement par secteur (avec "Sans secteur" toujours en dernier) ──
   const groups = useMemo(() => {
     const map = new Map()
     allDepartements.forEach((d) => {
@@ -60,7 +45,6 @@ function Departements() {
     return list
   }, [allDepartements])
 
-  // ── Liste filtrée selon la sélection du panneau gauche ──
   const filteredList = useMemo(() => {
     if (activeFilter.type === 'secteur') {
       return allDepartements.filter((d) => (d.secteur ? d.secteur.id : 'none') === activeFilter.id)
@@ -81,7 +65,6 @@ function Departements() {
     return 'Départements'
   }, [activeFilter, groups, allDepartements])
 
-  // ── Pagination côté client ──
   useEffect(() => {
     setPage(1)
   }, [activeFilter, rowsPerPage])
@@ -102,7 +85,6 @@ function Departements() {
     )
   }
 
-  // ── Plier / déplier un groupe (secteur) — n'affecte pas le filtre actif ──
   const toggleGroupCollapse = (groupId, e) => {
     e.stopPropagation()
     setCollapsedGroups((prev) => {
@@ -118,18 +100,16 @@ function Departements() {
 
   const handleDelete = async (id, nom) => {
     if (!confirm(`Supprimer le département "${nom}" ?`)) return
-    await deleteDepartement(id)
+    await deleteDepartement(id).unwrap()
     if (activeFilter.type === 'dept' && activeFilter.id === id) {
       setActiveFilter({ type: 'all' })
     }
-    fetchDepartements()
   }
 
   const handleDeleteSelected = async () => {
     if (!confirm(`Supprimer les ${selected.length} départements sélectionnés ?`)) return
-    await Promise.all(selected.map((id) => deleteDepartement(id)))
+    await Promise.all(selected.map((id) => deleteDepartement(id).unwrap()))
     setSelected([])
-    fetchDepartements()
   }
 
   const openAdd = () => {
@@ -149,13 +129,11 @@ function Departements() {
 
   const handleSaved = () => {
     closeForm()
-    fetchDepartements()
   }
 
   return (
     <div className="dp-page">
       <div className="dp-layout">
-        {/* ── Panneau gauche : arborescence pliable par secteur ── */}
         <div className="dp-tree-panel">
           <div className="dp-tree-header">
             <FontAwesomeIcon icon={faSitemap} />
@@ -191,7 +169,6 @@ function Departements() {
                     } ${isWarning ? 'warning' : ''}`}
                     onClick={() => setActiveFilter({ type: 'secteur', id: group.id })}
                   >
-                    {/* Icône +/- : plier / déplier sans changer le filtre */}
                     <span
                       className="dp-tree-toggle"
                       onClick={(e) => toggleGroupCollapse(group.id, e)}
@@ -241,7 +218,6 @@ function Departements() {
           </div>
         </div>
 
-        {/* ── Panneau principal ── */}
         <div className="dp-card">
           <div className="dp-card-header">
             <div>
@@ -284,13 +260,13 @@ function Departements() {
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan="7" className="dp-empty-cell">Chargement...</td>
+                    <td colSpan="6" className="dp-empty-cell">Chargement...</td>
                   </tr>
                 )}
 
                 {!loading && pageItems.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="dp-empty-cell">Aucun département trouvé.</td>
+                    <td colSpan="6" className="dp-empty-cell">Aucun département trouvé.</td>
                   </tr>
                 )}
 
