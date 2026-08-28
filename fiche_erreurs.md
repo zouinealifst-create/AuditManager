@@ -46,3 +46,14 @@ Grâce à Git (qui garde un historique de tout), nous sommes remontés dans le t
 Imaginez que vous écriviez la fin d'un chapitre sur la page 10 d'un livre, pendant qu'un collègue écrit un autre texte, exactement sur la même page 10, à la même ligne. Lorsque vous essayez de rassembler vos deux travaux (avec `git pull` ou `git stash pop`), Git est bloqué : il ne sait pas quelle phrase garder. Il met donc l'application en pause, ajoute des balises "bizarres" dans votre code (`<<<<<<<`, `=======`, `>>>>>>>`) et vous dit : *"C'est à vous de choisir"*.
 * **La Solution :** 
 Pour résoudre cela, il faut aller manuellement dans les fichiers en conflit (comme `store.js` ou `Sidebar.jsx`), supprimer les balises de Git (`<<<<<<<`, etc.), et "mélanger" intelligemment le code (par exemple, garder les ajouts de votre collègue ET vos propres ajouts). Une fois le fichier nettoyé, on dit à Git que c'est résolu en l'ajoutant (`git add`) et en le validant (`git commit`).
+
+---
+
+## 5. Erreur de syntaxe et d'affichage (Marqueurs de conflit Git laissés dans App.jsx / JSX)
+
+> **Symptôme :** Écran blanc ou erreur "500 Internal Server Error" dans la console signalant des caractères inattendus (`<<<<<<< HEAD`) dans `App.jsx` ou `EntrepriseProfil.jsx`.
+
+* **La Raison :** 
+Après un "Merge Conflict" (comme expliqué au point précédent), le fichier a été sauvegardé sans que les marqueurs générés par Git (`<<<<<<< HEAD`, `=======`, `>>>>>>>`) n'aient été retirés. Comme ces marqueurs ne sont pas du code JavaScript/JSX valide, le compilateur frontend (Vite) n'arrive plus à lire le fichier et l'application "crashe" au démarrage.
+* **La Solution :** 
+Nous avons ouvert le fichier problématique, repéré ces balises de conflit, et nous les avons supprimées en choisissant avec soin quelle version du code conserver (par exemple, nous avons gardé les imports de RTK Query plus récents). Une fois le fichier nettoyé des balises Git, l'application s'est remise à fonctionner instantanément.

@@ -31,7 +31,7 @@ export default function App() {
           <Route path="/users" element={<Users />} />
           <Route path="/profil" element={<Profil />} />
 
-          
+
           {/* ── Module Checklists ── */}
           <Route path="/checklists" element={<ChecklistsListPage />} />
 
