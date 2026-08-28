@@ -25,11 +25,3 @@
   background-color: rgba(139, 92, 246, 0.12);
   color: #7c3aed;
 }
-
-.us-action-toggle {
-  color: #6b7280;
-}
-
-.us-action-toggle:hover {
-  background-color: rgba(107, 114, 128, 0.1);
-}

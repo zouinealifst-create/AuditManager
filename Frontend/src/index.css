@@ -289,3 +289,50 @@ table {
   box-shadow: none;
 }
 
+.us-badge {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.us-badge-admin {
+  background-color: rgba(27, 94, 94, 0.12);
+  color: #1b5e5e;
+}
+
+.us-badge-rq {
+  background-color: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+.us-badge-audit {
+  background-color: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+}
+
+.us-badge-rd {
+  background-color: rgba(139, 92, 246, 0.12);
+  color: #7c3aed;
+}
+
+.badge-status-actif {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.badge-status-inactif {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}

@@ -1,9 +1,21 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { useAuth } from '../context/AuthContext'
 
-import { faHouse, faBuilding, faSitemap, faUsers, faClipboardList, faClipboardCheck} from '@fortawesome/free-solid-svg-icons'
+import {
+  faHouse,
+  faBuilding,
+  faSitemap,
+  faUsers,
+  faClipboardList,
+  faClipboardCheck,
+  faRightFromBracket,
+} from '@fortawesome/free-solid-svg-icons'
 
 function Sidebar() {
+    const { logout } = useAuth()
+    const navigate = useNavigate()
+
     const menuItems = [
         { path: '/dashboard', label: 'Accueil', icon: faHouse },
         { path: '/entreprise', label: 'Mon entreprise', icon: faBuilding },
@@ -12,6 +24,11 @@ function Sidebar() {
         { path: '/checklists', label: 'Checklists', icon: faClipboardList },
         { path: '/audits', label: 'Historique des audits', icon: faClipboardCheck },
     ]
+
+    const handleLogout = async () => {
+        await logout()
+        navigate('/login')
+    }
 
     return (
         <div className="sidebar d-flex flex-column">
@@ -33,8 +50,13 @@ function Sidebar() {
                 {item.label}
             </NavLink>
             ))}
-
         </nav>
+
+        {/* Déconnexion — toujours ancrée en bas de la sidebar */}
+        <button className="sidebar-logout-btn" onClick={handleLogout}>
+            <FontAwesomeIcon icon={faRightFromBracket} className="me-2" />
+            Se déconnecter
+        </button>
         </div>
     )
 }

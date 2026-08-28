@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes, faSave, faUserShield } from '@fortawesome/free-solid-svg-icons'
-import { createUser, updateUser } from '../services/userService'
-import { getRoles } from '../services/roleService'
-import { getDepartements } from '../services/departementService'
+import { useCreateUserMutation, useUpdateUserMutation } from '../store/api/usersApi'
+import { useGetRolesQuery } from '../store/api/rolesApi'
+import { useGetDepartementsQuery } from '../store/api/departementsApi'
 import './UserForm.css'
 
 export default function UserForm({ initialData, onClose, onSaved }) {
@@ -19,26 +19,17 @@ export default function UserForm({ initialData, onClose, onSaved }) {
     statut: 'actif',
   })
 
-  const [roles, setRoles] = useState([])
-  const [rolesLoaded, setRolesLoaded] = useState(false)
-  const [departements, setDepartements] = useState([])
-  const [departementsLoaded, setDepartementsLoaded] = useState(false)
+  const { data: roles = [], isLoading: loadingRoles } = useGetRolesQuery()
+  const { data: departements = [], isLoading: loadingDepartements } = useGetDepartementsQuery({ per_page: 100 })
+  const [createUser] = useCreateUserMutation()
+  const [updateUser] = useUpdateUserMutation()
+
+  const rolesLoaded = !loadingRoles
+  const departementsLoaded = !loadingDepartements
 
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState({})
   const [errGlobal, setErrGlobal] = useState('')
-
-  useEffect(() => {
-    getRoles()
-      .then((data) => setRoles(Array.isArray(data) ? data : data?.data ?? []))
-      .catch(() => setRoles([]))
-      .finally(() => setRolesLoaded(true))
-
-    getDepartements({ per_page: 100 })
-      .then((data) => setDepartements(data.data ?? []))
-      .catch(() => setDepartements([]))
-      .finally(() => setDepartementsLoaded(true))
-  }, [])
 
   useEffect(() => {
     setForm({
@@ -87,15 +78,15 @@ export default function UserForm({ initialData, onClose, onSaved }) {
     setSaving(true)
     try {
       if (isEdit) {
-        await updateUser(initialData.id, payload)
+        await updateUser({ id: initialData.id, ...payload }).unwrap()
       } else {
-        await createUser(payload)
+        await createUser(payload).unwrap()
       }
       onSaved()
     } catch (err) {
-      if (err.response?.status === 422) {
-        setErrors(err.response.data.errors || {})
-        setErrGlobal(err.response.data.message || 'Données invalides.')
+      if (err.status === 422) {
+        setErrors(err.data?.errors || {})
+        setErrGlobal(err.data?.message || 'Données invalides.')
       } else {
         setErrGlobal('Impossible de contacter le serveur.')
       }

@@ -5,7 +5,11 @@ import {
   faChevronLeft, faChevronRight, faUserShield, faPowerOff,
 } from '@fortawesome/free-solid-svg-icons'
 import { AnimatePresence } from 'framer-motion'
-import { getUsers, deleteUser, toggleUserStatut } from '../../services/userService'
+import {
+  useGetUsersQuery,
+  useDeleteUserMutation,
+  useToggleUserStatutMutation,
+} from '../../store/api/usersApi'
 import UserForm from '../../components/UserForm'
 import './Users.css'
 
@@ -17,8 +21,10 @@ const ROLE_COLORS = {
 }
 
 function Users() {
-  const [allUsers, setAllUsers] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { data: allUsers = [], isLoading: loading } = useGetUsersQuery({ per_page: 100 })
+  const [deleteUser] = useDeleteUserMutation()
+  const [toggleUserStatut] = useToggleUserStatutMutation()
+
   const [selected, setSelected] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
@@ -26,21 +32,6 @@ function Users() {
   const [page, setPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(10)
 
-  const fetchUsers = async () => {
-    setLoading(true)
-    try {
-      const data = await getUsers({ per_page: 100 })
-      setAllUsers(data.data)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchUsers()
-  }, [])
-
-  // ── Groupement par rôle ──
   const groups = useMemo(() => {
     const map = new Map()
     allUsers.forEach((u) => {
@@ -89,20 +80,17 @@ function Users() {
 
   const handleDelete = async (id, name) => {
     if (!confirm(`Supprimer l'utilisateur "${name}" ?`)) return
-    await deleteUser(id)
-    fetchUsers()
+    await deleteUser(id).unwrap()
   }
 
   const handleDeleteSelected = async () => {
     if (!confirm(`Supprimer les ${selected.length} utilisateurs sélectionnés ?`)) return
-    await Promise.all(selected.map((id) => deleteUser(id)))
+    await Promise.all(selected.map((id) => deleteUser(id).unwrap()))
     setSelected([])
-    fetchUsers()
   }
 
   const handleToggleStatut = async (id) => {
-    await toggleUserStatut(id)
-    fetchUsers()
+    await toggleUserStatut(id).unwrap()
   }
 
   const openAdd = () => {
@@ -122,13 +110,11 @@ function Users() {
 
   const handleSaved = () => {
     closeForm()
-    fetchUsers()
   }
 
   return (
     <div className="dp-page">
       <div className="dp-layout">
-        {/* ── Panneau gauche : groupé par rôle ── */}
         <div className="dp-tree-panel">
           <div className="dp-tree-header">
             <FontAwesomeIcon icon={faUserShield} />
@@ -168,7 +154,6 @@ function Users() {
           </div>
         </div>
 
-        {/* ── Panneau principal ── */}
         <div className="dp-card">
           <div className="dp-card-header">
             <div>

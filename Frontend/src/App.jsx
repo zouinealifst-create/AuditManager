@@ -8,6 +8,7 @@ import ChecklistsListPage from './pages/Checklist/ChecklistsListPage'
 import Departements from './pages/Departement/Departements'
 import Users from './pages/Utilisateur/Users'
 import AuditsListPage from './pages/Audit/AuditsListPage'
+import Profil from './pages/Profil/Profil'
 
 export default function App() {
   return (
@@ -26,6 +27,8 @@ export default function App() {
           <Route path="/departements" element={<Departements />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/users" element={<Users />} />
+          <Route path="/profil" element={<Profil />} />
+
           
           {/* ── Module Checklists ── */}
           <Route path="/checklists" element={<ChecklistsListPage />} />

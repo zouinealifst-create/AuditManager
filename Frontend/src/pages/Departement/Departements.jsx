@@ -278,7 +278,6 @@ function Departements() {
                   <th>SECTEUR</th>
                   <th>DESCRIPTION</th>
                   <th>RESPONSABLE</th>
-                  <th>EMPLOYÉS</th>
                   <th className="text-end">ACTIONS</th>
                 </tr>
               </thead>
@@ -331,7 +330,6 @@ function Departements() {
                           '—'
                         )}
                       </td>
-                      <td>{dept.nombre_employes ?? 0}</td>
                       <td className="text-end">
                         <button
                           className="dp-action-btn dp-action-edit"

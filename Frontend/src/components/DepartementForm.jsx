@@ -2,13 +2,16 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes, faSave, faSitemap } from '@fortawesome/free-solid-svg-icons'
-import { createDepartement, updateDepartement } from '../services/departementService'
-import { getUsers } from '../services/userService'
-import { getSecteurs } from '../services/secteurService'
+import {
+  useCreateDepartementMutation,
+  useUpdateDepartementMutation,
+} from '../store/api/departementsApi'
+import { useGetUsersQuery } from '../store/api/usersApi'
+import { useGetSecteursQuery } from '../store/api/secteursApi'
 import './DepartementForm.css'
 
-// Single-tenant : l'app ne gère qu'une seule entreprise (voir entrepriseService.js)
 const ENTREPRISE_ID = 1
+const ROLES_RESPONSABLES = ['Responsable Département', 'Responsable Qualité']
 
 export default function DepartementForm({ initialData, onClose, onSaved }) {
   const isEdit = Boolean(initialData)
@@ -20,37 +23,19 @@ export default function DepartementForm({ initialData, onClose, onSaved }) {
     secteur_id: '',
   })
 
-  const [users, setUsers] = useState([])
-  const [usersLoaded, setUsersLoaded] = useState(false)
-  const [secteurs, setSecteurs] = useState([])
-  const [secteursLoaded, setSecteursLoaded] = useState(false)
+  const { data: allUsers = [], isLoading: loadingUsers } = useGetUsersQuery({ per_page: 100 })
+  const { data: secteurs = [], isLoading: loadingSecteurs } = useGetSecteursQuery()
+  const [createDepartement] = useCreateDepartementMutation()
+  const [updateDepartement] = useUpdateDepartementMutation()
+
+  const usersLoaded = !loadingUsers
+  const secteursLoaded = !loadingSecteurs
+  const users = allUsers.filter((u) => ROLES_RESPONSABLES.includes(u.role?.name))
 
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState({})
   const [errGlobal, setErrGlobal] = useState('')
 
-  // ── Charger la liste des utilisateurs pour le select responsable ──
-  useEffect(() => {
-    getUsers({ per_page: 100 })
-      .then((data) => {
-        const list = Array.isArray(data) ? data : data?.data ?? []
-        const ROLES_RESPONSABLES = ['Responsable Département', 'Responsable Qualité']
-        const responsables = list.filter((u) => ROLES_RESPONSABLES.includes(u.role?.name))
-        setUsers(responsables)
-      })
-      .catch(() => setUsers([]))
-      .finally(() => setUsersLoaded(true))
-  }, [])
-
-  // ── Charger la liste des secteurs pour le select secteur ──
-  useEffect(() => {
-    getSecteurs()
-      .then((data) => setSecteurs(Array.isArray(data) ? data : data?.data ?? []))
-      .catch(() => setSecteurs([]))
-      .finally(() => setSecteursLoaded(true))
-  }, [])
-
-  // ── Pré-remplir le formulaire ──
   useEffect(() => {
     setForm({
       nom: initialData?.nom ?? '',
@@ -90,35 +75,32 @@ export default function DepartementForm({ initialData, onClose, onSaved }) {
     setSaving(true)
     try {
       if (isEdit) {
-        await updateDepartement(initialData.id, payload)
+        await updateDepartement({ id: initialData.id, ...payload }).unwrap()
       } else {
-        await createDepartement(payload)
+        await createDepartement(payload).unwrap()
       }
       onSaved()
-      } catch (err) {
-    console.error('Erreur création département:', err)
+    } catch (err) {
+      console.error('Erreur création département:', err)
 
-    if (err.response?.status === 422) {
-      setErrors(err.response.data.errors || {})
-      setErrGlobal(err.response.data.message || 'Données invalides.')
-    } else if (err.response) {
-      setErrGlobal(
-        err.response.data?.message ||
-        `Erreur serveur (${err.response.status}). Consultez les logs Laravel.`
-      )
-    } else if (err.request) {
-      setErrGlobal('Impossible de contacter le serveur. Vérifiez que le backend Laravel est démarré.')
-    } else {
-      setErrGlobal('Une erreur inattendue est survenue.')
+      if (err.status === 422) {
+        setErrors(err.data?.errors || {})
+        setErrGlobal(err.data?.message || 'Données invalides.')
+      } else if (err.status) {
+        setErrGlobal(
+          err.data?.message ||
+          `Erreur serveur (${err.status}). Consultez les logs Laravel.`
+        )
+      } else {
+        setErrGlobal('Impossible de contacter le serveur. Vérifiez que le backend Laravel est démarré.')
+      }
+    } finally {
+      setSaving(false)
     }
-  } finally {
-    setSaving(false)
-  }
   }
 
   return (
     <>
-      {/* Overlay semi-transparent */}
       <motion.div
         className="dp-panel-overlay"
         initial={{ opacity: 0 }}
@@ -127,7 +109,6 @@ export default function DepartementForm({ initialData, onClose, onSaved }) {
         onClick={onClose}
       />
 
-      {/* Panneau latéral */}
       <motion.div
         className="dp-edit-panel"
         initial={{ x: '100%' }}
@@ -135,7 +116,6 @@ export default function DepartementForm({ initialData, onClose, onSaved }) {
         exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 28, stiffness: 260 }}
       >
-        {/* Header */}
         <div className="dp-panel-header">
           <div className="dp-panel-header-title-wrap">
             <span className="dp-panel-header-icon">
@@ -153,14 +133,12 @@ export default function DepartementForm({ initialData, onClose, onSaved }) {
           </button>
         </div>
 
-        {/* Corps scrollable */}
         <div className="dp-panel-body">
           {errGlobal && (
             <div className="dp-panel-alert">⚠ {errGlobal}</div>
           )}
 
           <form onSubmit={handleSubmit} noValidate>
-            {/* Nom */}
             <div className="dp-form-group">
               <label className="dp-form-label" htmlFor="dept-nom">
                 Nom du département <span className="dp-required">*</span>
@@ -181,7 +159,6 @@ export default function DepartementForm({ initialData, onClose, onSaved }) {
               )}
             </div>
 
-            {/* Description */}
             <div className="dp-form-group">
               <label className="dp-form-label" htmlFor="dept-description">
                 Description
@@ -196,8 +173,6 @@ export default function DepartementForm({ initialData, onClose, onSaved }) {
               />
             </div>
 
-
-            {/* Secteur */}
             <div className="dp-form-group">
               <label className="dp-form-label" htmlFor="dept-secteur">
                 Secteur d'activité
@@ -224,7 +199,6 @@ export default function DepartementForm({ initialData, onClose, onSaved }) {
               </div>
             </div>
 
-            {/* Responsable */}
             <div className="dp-form-group">
               <label className="dp-form-label" htmlFor="dept-responsable">
                 Responsable
@@ -256,7 +230,6 @@ export default function DepartementForm({ initialData, onClose, onSaved }) {
               )}
             </div>
 
-            {/* Actions */}
             <div className="dp-panel-actions">
               <button
                 type="button"

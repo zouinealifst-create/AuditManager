@@ -40,6 +40,27 @@
     border-left: 3px solid white;
 }
 
+/* ── Bouton de déconnexion en bas de la sidebar (façon maquette) ── */
+.sidebar-logout-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.9rem 1.5rem;
+    background: transparent;
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.sidebar-logout-btn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
 .main-content {
     background-color: #f4f6f8;
     min-height: 100vh;
@@ -58,3 +79,114 @@
     color: #1f2937;
     font-weight: 600;
 }
+
+/* ── Bouton utilisateur dans la Topbar ── */
+.topbar-user-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 0.35rem 0.6rem 0.35rem 0.35rem;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.topbar-user-btn:hover {
+    background-color: #f3f4f6;
+    border-color: #e5e7eb;
+}
+
+.topbar-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2c767c 0%, #3a8a90 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.topbar-user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.15;
+}
+
+.topbar-user-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.topbar-user-role {
+    font-size: 0.7rem;
+    color: #6c757d;
+}
+
+.topbar-chevron {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    margin-left: 0.15rem;
+}
+
+/* ── Dropdown ── */
+.topbar-dropdown {
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    padding: 0.4rem;
+    margin-top: 0.5rem;
+}
+
+.topbar-dropdown-item {
+    border-radius: 7px;
+    font-size: 0.875rem;
+    padding: 0.55rem 0.75rem;
+    display: flex;
+    align-items: center;
+}
+
+.topbar-dropdown-item:hover {
+    background-color: rgba(58, 138, 144, 0.08);
+    color: #2c767c;
+}
+
+.topbar-dropdown-item-danger:hover {
+    background-color: rgba(239, 68, 68, 0.08);
+    color: #dc2626;
+}
+
+.topbar-avatar-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e5e7eb;
+    border: none;
+    color: #9ca3af;
+    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.1s;
+    padding: 0;
+    overflow: hidden;
+}
+
+.topbar-avatar-btn:hover {
+    background-color: #d1d5db;
+    transform: scale(1.04);
+}
+
+.topbar-avatar-btn svg {
+    width: 100%;
+    height: 100%;
+}
+

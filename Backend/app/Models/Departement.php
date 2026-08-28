@@ -22,10 +22,6 @@ class Departement extends Model
         return $this->belongsTo(Entreprise::class);
     }
 
-    /**
-     * Le secteur principal auquel appartient ce département.
-     * Permet de filtrer les normes applicables via norme_secteur.
-     */
     public function secteur()
     {
         return $this->belongsTo(Secteur::class);
