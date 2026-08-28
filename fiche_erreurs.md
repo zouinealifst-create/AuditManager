@@ -1,4 +1,4 @@
-# Fiche d'Erreurs et de Résolution de Bugs (Guide pour Débutant)
+# Fiche d'Erreurs et de Résolution de Bugs 
 
 Cette fiche répertorie les erreurs que nous avons rencontrées lors du développement de **AuditManager**, expliquées de manière simple pour comprendre pourquoi elles sont apparues et comment nous les avons corrigées.
 
