@@ -9,6 +9,7 @@ import './api/entreprisesApi'
 import './api/usersApi'
 import './api/rolesApi'
 import './api/secteursApi'
+import './api/nonConformitesApi'
 
 export const store = configureStore({
   reducer: {

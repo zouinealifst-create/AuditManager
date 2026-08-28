@@ -303,11 +303,9 @@ export default function ChecklistsListPage() {
   }
 
   // ── Après édition dans le panneau latéral ─────────────────
-  // RTK Query invalide automatiquement la checklist éditée.
-  // On met aussi à jour l'état local du panneau pour fermer proprement.
   const handleSaved = () => {
     setEditChecklist(null)
-    // La liste et le détail sont invalidés via updateChecklistMutation → tags
+    refetch() // Forcer le rafraîchissement de la liste car updateChecklist n'est pas une mutation RTK Query
   }
 
   // ── Render ────────────────────────────────────────────────

@@ -22,9 +22,8 @@ Route::get('/test', function () {
 // ── Authentification ──────────────────────────────────────────────
 Route::post('login', [AuthController::class, 'login']);
 
-// ── Checklists & Questions (sans auth pour les tests dev — TODO Dev2) ──
-Route::apiResource('checklists', ChecklistController::class);
-Route::apiResource('checklists.questions', QuestionController::class)->shallow();
+// ── Checklists & Questions ──
+// Les routes ont été déplacées dans le groupe auth:sanctum
 
 // ── Toutes les routes protégées (nécessitent un token valide) ──────
 Route::middleware('auth:sanctum')->group(function () {
@@ -55,6 +54,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Normes
     Route::apiResource('normes', NormeController::class);
+
+    // Checklists & Questions
+    Route::apiResource('checklists', ChecklistController::class);
+    Route::apiResource('checklists.questions', QuestionController::class)->shallow();
 
     // Audits
     Route::apiResource('audits', AuditController::class);

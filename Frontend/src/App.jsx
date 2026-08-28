@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Authentification/Login'
 import Dashboard from './pages/Dashboard'
+import ResponsableQualiteDashboard from './pages/Dashboard/ResponsableQualiteDashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminLayout from './layouts/AdminLayout'
 import EntrepriseProfil from './pages/Entreprise/EntrepriseProfil'
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/entreprise" element={<EntrepriseProfil />} />
           <Route path="/departements" element={<Departements />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard-rq" element={<ResponsableQualiteDashboard />} />
           <Route path="/users" element={<Users />} />
           <Route path="/profil" element={<Profil />} />
 

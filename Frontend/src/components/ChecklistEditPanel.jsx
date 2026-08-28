@@ -134,26 +134,27 @@ export default function ChecklistEditPanel({ checklist, onClose, onSaved }) {
 
     const localErrors = {}
     if (!form.norme_id) localErrors.norme_id = 'La norme est requise.'
-    if (!form.titre.trim()) localErrors.titre = 'Le titre est requis.'
+    if (!form.titre?.trim()) localErrors.titre = 'Le titre est requis.'
     if (Object.keys(localErrors).length > 0) { setErrors(localErrors); return }
 
     setSaving(true)
     try {
       const updated = await updateChecklist(checklist.id, {
         norme_id:    Number(form.norme_id),
-        titre:       form.titre.trim(),
-        description: form.description.trim() || null,
+        titre:       form.titre?.trim() || '',
+        description: form.description?.trim() || null,
         statut:      form.statut,
       })
       onSaved(updated)
     } catch (err) {
+      console.error("Erreur lors de l'enregistrement de la checklist:", err)
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors || {})
         setErrGlobal(err.response.data.message || 'Données invalides.')
       } else if (err.response?.status === 403) {
         setErrGlobal('Action non autorisée.')
       } else {
-        setErrGlobal('Impossible de contacter le serveur.')
+        setErrGlobal(err.message || 'Impossible de contacter le serveur.')
       }
     } finally {
       setSaving(false)

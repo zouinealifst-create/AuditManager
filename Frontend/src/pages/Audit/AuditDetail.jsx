@@ -69,24 +69,42 @@ export default function AuditDetail({ auditId, onBack, onRefresh }) {
 
   // ── Action : Planifier ──
   const handlePlanifier = async () => {
-    if (!audit.auditeur_id || !audit.departement_id || !audit.date_prevue) {
-      Swal.fire('Impossible', 'Un auditeur, un département et une date prévue sont requis pour planifier.', 'warning')
+    if (!audit.auditeur_id || !audit.departement_id) {
+      Swal.fire('Impossible', 'Un auditeur et un département sont requis pour planifier.', 'warning')
       return
     }
-    const result = await Swal.fire({
-      title: 'Planifier cet audit ?',
-      text: `L'audit passera au statut "Planifié".`,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Planifier',
-      cancelButtonText: 'Annuler',
-      confirmButtonColor: '#1d4ed8',
-    })
-    if (!result.isConfirmed) return
+
+    let dateToPlan = audit.date_prevue;
+
+    if (!dateToPlan) {
+      const { value: dateInput } = await Swal.fire({
+        title: 'Date prévue manquante',
+        text: 'Veuillez renseigner la date prévue pour planifier cet audit :',
+        input: 'date',
+        showCancelButton: true,
+        confirmButtonText: 'Planifier',
+        cancelButtonText: 'Annuler',
+        confirmButtonColor: '#1d4ed8',
+      })
+      if (!dateInput) return
+      dateToPlan = dateInput
+    } else {
+      const result = await Swal.fire({
+        title: 'Planifier cet audit ?',
+        text: `L'audit passera au statut "Planifié".`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Planifier',
+        cancelButtonText: 'Annuler',
+        confirmButtonColor: '#1d4ed8',
+      })
+      if (!result.isConfirmed) return
+    }
+
     try {
       await planifierAudit({
         id:             audit.id,
-        date_prevue:    audit.date_prevue,
+        date_prevue:    dateToPlan,
         departement_id: audit.departement_id,
         auditeur_id:    audit.auditeur_id,
       }).unwrap()

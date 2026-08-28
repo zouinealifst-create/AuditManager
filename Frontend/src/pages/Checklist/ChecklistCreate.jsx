@@ -179,8 +179,11 @@ export default function ChecklistCreate({ onCreated, onCancel } = {}) {
 
   // ── Envoi séquentiel des questions ───────────────────────
   const envoyerQuestions = async () => {
-    for (const q of questions) {
+    // Ne pas renvoyer les questions déjà sauvegardées
+    const questionsNonSauvegardees = questions.filter(q => !q.sauvegardee)
+    for (const q of questionsNonSauvegardees) {
       await addQuestion(checklistId, { texte: q.texte, ordre: q.ordre })
+      q.sauvegardee = true // On la marque comme sauvegardée
     }
   }
 
