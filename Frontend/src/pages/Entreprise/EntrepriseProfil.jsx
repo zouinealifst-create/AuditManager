@@ -18,7 +18,14 @@ import {
   faToggleOn,
   faIndustry,
 } from '@fortawesome/free-solid-svg-icons'
-import { useGetEntrepriseQuery, useUpdateEntrepriseMutation } from '../../store/api/entreprisesApi'
+import Swal from 'sweetalert2'
+import Can from '../../components/Can'
+
+import {
+  useGetEntrepriseQuery,
+  useUpdateEntrepriseMutation,
+  useSyncSecteursMutation,
+} from '../../store/api/entreprisesApi'
 import EntrepriseCard from '../../components/EntrepriseCard'
 import './EntrepriseProfil.css'
 
@@ -359,18 +366,20 @@ function EntrepriseProfil() {
             )}
           </div>
 
-          <div className="form-footer-actions">
-            <button type="submit" className="btn-teal" disabled={loading}>
-              {loading ? 'Enregistrement...' : 'Enregistrer les modifications'}
-            </button>
-            <button
-              type="button"
-              className="btn-secondary-custom"
-              onClick={() => setEditMode(false)}
-            >
-              Annuler
-            </button>
-          </div>
+          <Can perform="entreprise.edit">
+            <div className="form-footer-actions">
+              <button type="submit" className="btn-teal" disabled={loading}>
+                {loading ? 'Enregistrement...' : 'Enregistrer les modifications'}
+              </button>
+              <button
+                type="button"
+                className="btn-secondary-custom"
+                onClick={() => setEditMode(false)}
+              >
+                Annuler
+              </button>
+            </div>
+          </Can>
         </form>
       </div>
     </div>

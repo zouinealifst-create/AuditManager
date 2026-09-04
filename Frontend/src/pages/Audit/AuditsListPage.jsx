@@ -31,6 +31,7 @@ import { useGetAuditsQuery, useDeleteAuditMutation } from '../../store/api/audit
 import { useGetDepartementsQuery } from '../../store/api/departementsApi'
 import AuditCreate from './AuditCreate'
 import AuditDetail from './AuditDetail'
+import Can from '../../components/Can'
 import './AuditsListPage.css'
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -182,10 +183,12 @@ export default function AuditsListPage() {
               </p>
             </div>
           </div>
-          <button className="au-btn-new" onClick={() => setPanelOpen(true)}>
-            <FontAwesomeIcon icon={faPlus} />
-            Nouvel Audit
-          </button>
+          <Can perform="audits.create">
+            <button className="au-btn-new" onClick={() => setPanelOpen(true)}>
+              <FontAwesomeIcon icon={faPlus} />
+              Nouvel Audit
+            </button>
+          </Can>
         </div>
 
         {/* Filtres */}
@@ -224,10 +227,12 @@ export default function AuditsListPage() {
             <div className="au-empty">
               <FontAwesomeIcon icon={faClipboardCheck} className="au-empty-icon" />
               <span>Aucun audit trouvé.</span>
-              <button className="au-btn-new" style={{ marginTop: '0.5rem' }} onClick={() => setPanelOpen(true)}>
-                <FontAwesomeIcon icon={faPlus} />
-                Créer le premier audit
-              </button>
+              <Can perform="audits.create">
+                <button className="au-btn-new" style={{ marginTop: '0.5rem' }} onClick={() => setPanelOpen(true)}>
+                  <FontAwesomeIcon icon={faPlus} />
+                  Planifier un audit
+                </button>
+              </Can>
             </div>
           ) : (
             <>
@@ -289,22 +294,26 @@ export default function AuditsListPage() {
                               >
                                 <FontAwesomeIcon icon={faEye} />
                               </button>
-                              {audit.statut === 'brouillon' && (
+                              <Can perform="audits.edit">
+                                {audit.statut === 'brouillon' && (
+                                  <button
+                                    className="au-action-btn au-action-plan"
+                                    title="Planifier"
+                                    onClick={() => { setSelectedAudit(audit); setModalMode('detail'); }}
+                                  >
+                                    <FontAwesomeIcon icon={faCalendarCheck} />
+                                  </button>
+                                )}
+                              </Can>
+                              <Can perform="audits.delete">
                                 <button
-                                  className="au-action-btn au-action-plan"
-                                  title="Planifier"
-                                  onClick={() => { setSelectedAudit(audit); setModalMode('detail'); }}
+                                  className="au-action-btn au-action-delete"
+                                  title="Supprimer"
+                                  onClick={() => handleDelete(audit)}
                                 >
-                                  <FontAwesomeIcon icon={faCalendarCheck} />
+                                  <FontAwesomeIcon icon={faTrash} />
                                 </button>
-                              )}
-                              <button
-                                className="au-action-btn au-action-delete"
-                                title="Supprimer"
-                                onClick={() => handleDelete(audit)}
-                              >
-                                <FontAwesomeIcon icon={faTrash} />
-                              </button>
+                              </Can>
                             </div>
                           </td>
                         </motion.tr>

@@ -14,7 +14,7 @@ class UserController extends Controller
 
     public function index()
     {
-        $users = User::with(['role', 'departement'])->latest()->paginate(10);
+        $users = User::with(['role', 'departement', 'permissions'])->latest()->paginate(10);
 
         return UserResource::collection($users);
     }
@@ -25,16 +25,17 @@ class UserController extends Controller
         $data['password'] = Hash::make($data['password']);
 
         $user = User::create($data);
-        $user->load(['role', 'departement']);
+        $user->permissions()->sync($request->permissions ?? []);
+        $user->load(['role', 'departement', 'permissions']);
 
         $this->syncDepartementResponsable($user);
 
-        return new UserResource($user->fresh(['role', 'departement']));
+        return new UserResource($user->fresh(['role', 'departement', 'permissions']));
     }
 
     public function show(User $user)
     {
-        return new UserResource($user->load(['role', 'departement']));
+        return new UserResource($user->load(['role', 'departement', 'permissions']));
     }
 
     public function update(UserRequest $request, User $user)
@@ -50,11 +51,12 @@ class UserController extends Controller
         $oldDepartementId = $user->departement_id;
 
         $user->update($data);
-        $user->load(['role', 'departement']);
+        $user->permissions()->sync($request->permissions ?? []);
+        $user->load(['role', 'departement', 'permissions']);
 
         $this->syncDepartementResponsable($user, $oldDepartementId);
 
-        return new UserResource($user->fresh(['role', 'departement']));
+        return new UserResource($user->fresh(['role', 'departement', 'permissions']));
     }
 
     public function destroy(User $user)
@@ -72,7 +74,7 @@ class UserController extends Controller
             'statut' => $user->statut === 'actif' ? 'inactif' : 'actif',
         ]);
 
-        return new UserResource($user->load(['role', 'departement']));
+        return new UserResource($user->load(['role', 'departement', 'permissions']));
     }
 
     private function syncDepartementResponsable(User $user, ?int $oldDepartementId = null): void

@@ -5,12 +5,11 @@ import {
     faChevronLeft, faChevronRight, faCircleUser, faSitemap,
     faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
-import { AnimatePresence } from 'framer-motion'
 import { useGetDepartementsQuery, useDeleteDepartementMutation } from '../../store/api/departementsApi'
 
 import DepartementForm from '../../components/DepartementForm'
+import Can from '../../components/Can'
 import './Departements.css'
-
 function Departements() {
     const { data: allDepartements = [], isLoading: loading } = useGetDepartementsQuery({ per_page: 100 })
     const [deleteDepartement] = useDeleteDepartementMutation()
@@ -232,10 +231,12 @@ function Departements() {
             </div>
 
             <div className="dp-header-actions">
-              <button className="dp-add-btn" onClick={openAdd}>
-                <FontAwesomeIcon icon={faPlus} />
-                Ajouter Département
-              </button>
+              <Can perform="departements.create">
+                <button className="dp-add-btn" onClick={openAdd}>
+                  <FontAwesomeIcon icon={faPlus} />
+                  Ajouter Département
+                </button>
+              </Can>
             </div>
           </div>
 
@@ -307,20 +308,24 @@ function Departements() {
                         )}
                       </td>
                       <td className="text-end">
-                        <button
-                          className="dp-action-btn dp-action-edit"
-                          onClick={() => openEdit(dept)}
-                          title="Modifier"
-                        >
-                          <FontAwesomeIcon icon={faPen} />
-                        </button>
-                        <button
-                          className="dp-action-btn dp-action-danger"
-                          onClick={() => handleDelete(dept.id, dept.nom)}
-                          title="Supprimer"
-                        >
-                          <FontAwesomeIcon icon={faTrash} />
-                        </button>
+                        <Can perform="departements.edit">
+                          <button
+                            className="dp-action-btn dp-action-edit"
+                            onClick={() => openEdit(dept)}
+                            title="Modifier"
+                          >
+                            <FontAwesomeIcon icon={faPen} />
+                          </button>
+                        </Can>
+                        <Can perform="departements.delete">
+                          <button
+                            className="dp-action-btn dp-action-danger"
+                            onClick={() => handleDelete(dept.id, dept.nom)}
+                            title="Supprimer"
+                          >
+                            <FontAwesomeIcon icon={faTrash} />
+                          </button>
+                        </Can>
                       </td>
                     </tr>
                   ))}
@@ -329,15 +334,16 @@ function Departements() {
           </div>
 
           <div className="dp-card-footer">
-            <button
-              className="dp-delete-selection"
-              disabled={selected.length === 0}
-              onClick={handleDeleteSelected}
-            >
-              <FontAwesomeIcon icon={faTrash} />
-              SUPPRIMER SELECTION
-            </button>
-
+            <Can perform="departements.delete">
+              <button
+                className="dp-delete-selection"
+                disabled={selected.length === 0}
+                onClick={handleDeleteSelected}
+              >
+                <FontAwesomeIcon icon={faTrash} />
+                SUPPRIMER SELECTION
+              </button>
+            </Can>
             <div className="dp-pagination-controls">
               <select
                 className="dp-rows-select"
@@ -370,16 +376,14 @@ function Departements() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {showForm && (
+      {showForm && (
           <DepartementForm
             key={editingItem?.id ?? 'new'}
             initialData={editingItem}
             onClose={closeForm}
             onSaved={handleSaved}
           />
-        )}
-      </AnimatePresence>
+      )}
     </div>
   )
 }

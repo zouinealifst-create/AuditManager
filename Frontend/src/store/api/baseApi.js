@@ -49,6 +49,6 @@ export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: axiosBaseQuery(),
   keepUnusedDataFor: 300,
-  tagTypes: ['Audit', 'Checklist', 'Departement', 'Norme', 'Question', 'Entreprise', 'User', 'Role', 'Secteur'],
+  tagTypes: ['Audit', 'Checklist', 'Departement', 'Norme', 'Question', 'Entreprise', 'User', 'Role', 'Secteur', 'Permission'],
   endpoints: () => ({}),
 })

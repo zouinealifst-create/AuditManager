@@ -11,6 +11,7 @@ import {
   useToggleUserStatutMutation,
 } from '../../store/api/usersApi'
 import UserForm from '../../components/UserForm'
+import Can from '../../components/Can'
 import './Users.css'
 
 const ROLE_COLORS = {
@@ -168,10 +169,12 @@ function Users() {
             </div>
 
             <div className="dp-header-actions">
-              <button className="dp-add-btn" onClick={openAdd}>
-                <FontAwesomeIcon icon={faPlus} />
-                Ajouter Utilisateur
-              </button>
+              <Can perform="users.create">
+                <button className="dp-add-btn" onClick={openAdd}>
+                  <FontAwesomeIcon icon={faPlus} />
+                  Ajouter Utilisateur
+                </button>
+              </Can>
             </div>
           </div>
 
@@ -237,27 +240,31 @@ function Users() {
                         </span>
                       </td>
                       <td className="text-end">
-                        <button
-                          className="dp-action-btn dp-action-edit"
-                          onClick={() => openEdit(user)}
-                          title="Modifier"
-                        >
-                          <FontAwesomeIcon icon={faPen} />
-                        </button>
-                        <button
-                          className="dp-action-btn us-action-toggle"
-                          onClick={() => handleToggleStatut(user.id)}
-                          title={user.statut === 'actif' ? 'Désactiver' : 'Activer'}
-                        >
-                          <FontAwesomeIcon icon={faPowerOff} />
-                        </button>
-                        <button
-                          className="dp-action-btn dp-action-danger"
-                          onClick={() => handleDelete(user.id, user.name)}
-                          title="Supprimer"
-                        >
-                          <FontAwesomeIcon icon={faTrash} />
-                        </button>
+                        <Can perform="users.edit">
+                          <button
+                            className="dp-action-btn dp-action-edit"
+                            onClick={() => openEdit(user)}
+                            title="Modifier"
+                          >
+                            <FontAwesomeIcon icon={faPen} />
+                          </button>
+                          <button
+                            className="dp-action-btn us-action-toggle"
+                            onClick={() => handleToggleStatut(user.id)}
+                            title={user.statut === 'actif' ? 'Désactiver' : 'Activer'}
+                          >
+                            <FontAwesomeIcon icon={faPowerOff} />
+                          </button>
+                        </Can>
+                        <Can perform="users.delete">
+                          <button
+                            className="dp-action-btn dp-action-danger"
+                            onClick={() => handleDelete(user.id, user.name)}
+                            title="Supprimer"
+                          >
+                            <FontAwesomeIcon icon={faTrash} />
+                          </button>
+                        </Can>
                       </td>
                     </tr>
                   ))}
@@ -266,14 +273,16 @@ function Users() {
           </div>
 
           <div className="dp-card-footer">
-            <button
-              className="dp-delete-selection"
-              disabled={selected.length === 0}
-              onClick={handleDeleteSelected}
-            >
-              <FontAwesomeIcon icon={faTrash} />
-              SUPPRIMER SELECTION
-            </button>
+            <Can perform="users.delete">
+              <button
+                className="dp-delete-selection"
+                disabled={selected.length === 0}
+                onClick={handleDeleteSelected}
+              >
+                <FontAwesomeIcon icon={faTrash} />
+                SUPPRIMER SELECTION
+              </button>
+            </Can>
 
             <div className="dp-pagination-controls">
               <select

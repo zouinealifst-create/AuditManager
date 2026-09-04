@@ -23,6 +23,8 @@ class UserRequest extends FormRequest
             'role_id' => 'required|exists:roles,id',
             'departement_id' => 'nullable|exists:departements,id',
             'statut' => 'nullable|in:actif,inactif',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'exists:permissions,id',
         ];
     }
 }

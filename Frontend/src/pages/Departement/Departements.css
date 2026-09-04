@@ -189,18 +189,18 @@
 .dp-add-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: linear-gradient(135deg, #2c767c 0%, #3a8a90 100%);
+  gap: 0.4rem;
+  padding: 0.55rem 1.25rem;
+  border-radius: 10px;
   border: none;
-  color: white;
-  border-radius: 8px;
-  padding: 0.6rem 1.1rem;
+  background: linear-gradient(135deg, var(--color-primary-dark, #2c767c), var(--color-primary, #3a8a90));
+  color: #ffffff;
+  font-size: 0.875rem;
   font-weight: 600;
-  font-size: 0.85rem;
-  white-space: nowrap;
-  box-shadow: 0 2px 6px rgba(44, 118, 124, 0.28);
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.1s;
+  box-shadow: 0 4px 12px rgba(44, 118, 124, 0.28);
+  transition: opacity 0.2s, transform 0.15s;
+  white-space: nowrap;
 }
 
 .dp-add-btn:hover {

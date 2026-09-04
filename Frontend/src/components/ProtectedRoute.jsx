@@ -1,8 +1,10 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { usePermission } from '../hooks/usePermission'
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, permission }) {
     const { user, loading } = useAuth()
+    const hasPermission = usePermission(permission)
 
     if (loading) {
         return (
@@ -16,7 +18,11 @@ function ProtectedRoute({ children }) {
         return <Navigate to="/login" />
     }
 
+    if (permission && !hasPermission) {
+        return <Navigate to="/forbidden" />
+    }
+
     return children
 }
 
-export default ProtectedRoute
+export default ProtectedRoute

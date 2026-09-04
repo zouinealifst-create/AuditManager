@@ -31,7 +31,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'user' => new UserResource($user->load(['role', 'departement'])),
+            'user' => new UserResource($user->load(['role', 'departement', 'permissions'])),
             'token' => $token,
         ]);
     }
@@ -45,6 +45,6 @@ class AuthController extends Controller
 
     public function me()
     {
-        return new UserResource(request()->user()->load(['role', 'departement']));
+        return new UserResource(request()->user()->load(['role', 'departement', 'permissions']));
     }
 }

@@ -246,9 +246,8 @@ export default function ChecklistCreate({ onCreated, onCancel } = {}) {
     setErreurChamps({})
   }
 
-  // ── Rendu ────────────────────────────────────────────────
   return (
-    <div className="container" style={{ width: '100%', maxWidth: '100%', margin: 0, overflowX: 'hidden' }}>
+    <div className="cc-container">
       {/* En-tête */}
       <div className="section-header">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -257,11 +256,16 @@ export default function ChecklistCreate({ onCreated, onCancel } = {}) {
           </h1>
           {onCancel && (
             <button
+              type="button"
               onClick={onCancel}
               style={{
-                background: 'none', border: '1.5px solid var(--color-border)',
-                borderRadius: '8px', padding: '0.4rem 0.9rem',
-                fontSize: '0.85rem', color: 'var(--color-text-muted)', cursor: 'pointer',
+                background: 'none',
+                border: '1.5px solid rgba(255,255,255,0.3)',
+                borderRadius: '8px',
+                padding: '0.4rem 0.9rem',
+                fontSize: '0.85rem',
+                color: '#fff',
+                cursor: 'pointer',
               }}
             >
               Fermer ✕

@@ -10,6 +10,7 @@ import './api/usersApi'
 import './api/rolesApi'
 import './api/secteursApi'
 import './api/nonConformitesApi'
+import './api/permissionsApi'
 
 export const store = configureStore({
   reducer: {

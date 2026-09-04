@@ -26,6 +26,7 @@ class UserResource extends JsonResource
                     'nom' => $this->departement->nom,
                 ];
             }),
+            'permissions' => $this->permissions ? $this->permissions->pluck('key') : [],
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
