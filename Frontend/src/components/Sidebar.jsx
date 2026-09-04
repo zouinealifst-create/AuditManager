@@ -25,7 +25,6 @@ function Sidebar() {
         { path: '/entreprise', label: 'Mon entreprise', icon: faBuilding, permission: 'entreprise.view' },
         { path: '/departements', label: 'Départements', icon: faSitemap, permission: 'departements.view' },
         { path: '/users', label: 'Utilisateurs', icon: faUsers, permission: 'users.view' },
-        { path: '/roles', label: 'Rôles', icon: faUserShield, permission: 'users.view' },
         { path: '/checklists', label: 'Checklists', icon: faClipboardList, permission: 'checklists.view' },
         { path: '/audits', label: 'Historique des audits', icon: faClipboardCheck, permission: 'audits.view' },
     ]
