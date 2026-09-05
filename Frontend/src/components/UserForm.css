@@ -551,4 +551,152 @@ select.dp-form-control {
 .uf-action-check:disabled {
   opacity: 0.25;
   cursor: not-allowed;
-}
+}
+
+/* Permissions Matrix Styles */
+.perm-table-container {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.perm-table th {
+  background: #f8fafc;
+  padding: 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #475569;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.perm-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.perm-table tr:last-child td {
+  border-bottom: none;
+}
+
+.perm-table tr:hover {
+  background-color: #f8fafc;
+}
+
+.module-icon-ph {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--cc-navy, #1e3a8a);
+  margin-right: 12px;
+}
+
+/* Custom Checkbox */
+.perm-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.perm-checkbox {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.perm-custom-checkbox {
+  height: 20px;
+  width: 20px;
+  background-color: #f1f5f9;
+  border: 2px solid #cbd5e1;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.perm-checkbox:hover:not(:disabled) ~ .perm-custom-checkbox {
+  border-color: var(--cc-blue, #3b82f6);
+}
+
+.perm-checkbox:checked ~ .perm-custom-checkbox {
+  background-color: var(--cc-blue, #3b82f6);
+  border-color: var(--cc-blue, #3b82f6);
+}
+
+.perm-checkbox:disabled ~ .perm-custom-checkbox {
+  background-color: #e2e8f0;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.perm-checkbox:checked ~ .perm-custom-checkbox:after {
+  content: "";
+  position: absolute;
+  display: block;
+  left: 5px;
+  top: 1px;
+  width: 6px;
+  height: 12px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Toggle Switch */
+.perm-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  margin: 0;
+}
+
+.perm-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.perm-toggle .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1;
+  transition: .3s;
+}
+
+.perm-toggle .slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+}
+
+.perm-toggle input:checked + .slider {
+  background-color: #10b981;
+}
+
+.perm-toggle input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.perm-toggle .slider.round {
+  border-radius: 24px;
+}
+
+.perm-toggle .slider.round:before {
+  border-radius: 50%;
+}
+

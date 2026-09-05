@@ -18,8 +18,11 @@ class PermissionSeeder extends Seeder
             'entreprise' => ['view', 'edit'],
             'departements' => ['view', 'create', 'edit', 'delete'],
             'users' => ['view', 'create', 'edit', 'delete'],
+            'normes' => ['view', 'create', 'edit', 'delete'],
             'checklists' => ['view', 'create', 'edit', 'delete'],
             'audits' => ['view', 'create', 'edit', 'delete'],
+            'non-conformites' => ['view', 'create', 'edit', 'delete'],
+            'actions_correctives' => ['view', 'create', 'edit', 'delete'],
         ];
 
         $labels = [
@@ -29,12 +32,10 @@ class PermissionSeeder extends Seeder
             'delete' => 'Supprimer',
         ];
 
-        $allPermissions = [];
-
         foreach ($modules as $module => $actions) {
             foreach ($actions as $action) {
                 $key = "{$module}.{$action}";
-                $moduleName = ucfirst(str_replace('_', ' ', $module));
+                $moduleName = ucfirst(str_replace(['_', '-'], ' ', $module));
                 $label = "{$labels[$action]} {$moduleName}";
                 
                 Permission::firstOrCreate(
@@ -48,8 +49,25 @@ class PermissionSeeder extends Seeder
             }
         }
 
-        // Note: Aucune permission n'est pré-assignée à qui que ce soit.
-        // - Les Admins ont un bypass automatique via leur rôle (hasPermission retourne toujours true).
-        // - Pour tous les autres utilisateurs, l'Admin assigne manuellement les permissions via le formulaire.
+        // Ajouter la permission spéciale pour gérer toutes les checklists
+        $manageAllChecklists = Permission::firstOrCreate(
+            ['key' => 'checklists.manage_all'],
+            [
+                'module' => 'checklists',
+                'action' => 'manage_all',
+                'label'  => 'Gérer toutes les checklists (tous utilisateurs)'
+            ]
+        );
+
+        // Note: Aucune permission n'est pré-assignée à qui que ce soit, sauf exception :
+        // - Les Admins ont un bypass automatique via leur rôle (hasPermission retourne toujours true),
+        // mais nous leur assignons tout de même explicitement `checklists.manage_all` pour suivre la consigne.
+        $adminRole = Role::where('name', 'Admin')->first();
+        if ($adminRole) {
+            $adminUsers = User::where('role_id', $adminRole->id)->get();
+            foreach ($adminUsers as $adminUser) {
+                $adminUser->permissions()->syncWithoutDetaching([$manageAllChecklists->id]);
+            }
+        }
     }
 }

@@ -33,6 +33,8 @@ import { useListChecklistsQuery, useDeleteChecklistMutation, useGetChecklistQuer
 import { useGetAllNormesQuery } from '../../store/api/normesApi'
 import ChecklistEditPanel from '../../components/ChecklistEditPanel'
 import ChecklistCreate from './ChecklistCreate'
+import { usePermission } from '../../hooks/usePermission'
+import { useAuth } from '../../context/AuthContext'
 import './ChecklistsListPage.css'
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -75,6 +77,15 @@ function ViewQuestionsLoader({ cl, onDone }) {
 // ── Composant principal ──────────────────────────────────────
 export default function ChecklistsListPage() {
   const [panelOpen, setPanelOpen] = useState(false)
+
+  const { user } = useAuth()
+  const canCreate = usePermission('checklists.create')
+  const canEdit = usePermission('checklists.edit')
+  const canDelete = usePermission('checklists.delete')
+  const canManageAll = usePermission('checklists.manage_all')
+
+  const canEditChecklist = (cl) => canEdit && (canManageAll || (user && cl.cree_par === user.id))
+  const canDeleteChecklist = (cl) => canDelete && (canManageAll || (user && cl.cree_par === user.id))
 
   // ── Filtres ─────────────────────────────────────────────
   const [search,       setSearch]       = useState('')
@@ -345,10 +356,12 @@ export default function ChecklistsListPage() {
             <FontAwesomeIcon icon={faFilter} />
             {(filterStatut || filterNorme) && <span className="cl-filter-dot" />}
           </button>
-          <button className="cl-btn-new" onClick={() => { setEditChecklist(null); setPanelOpen(true) }}>
-            <FontAwesomeIcon icon={faPlus} className="me-1" />
-            Nouvelle Checklist
-          </button>
+          {canCreate && (
+            <button className="cl-btn-new" onClick={() => { setEditChecklist(null); setPanelOpen(true) }}>
+              <FontAwesomeIcon icon={faPlus} className="me-1" />
+              Nouvelle Checklist
+            </button>
+          )}
         </div>
       </div>
 
@@ -431,7 +444,7 @@ export default function ChecklistsListPage() {
         {/* Toolbar : sélection + pagination par page */}
         <div className="cl-toolbar">
           <div className="cl-toolbar-left">
-            {selected.size > 0 && (
+            {selected.size > 0 && canDelete && (
               <motion.button
                 className="cl-btn-delete-sel"
                 onClick={handleDeleteSelected}
@@ -543,22 +556,26 @@ export default function ChecklistsListPage() {
                     </td>
                     <td className="cl-td-date">{formatDate(cl.created_at)}</td>
                     <td className="cl-td-actions">
-                      <button
-                        className="cl-action-btn cl-action-edit"
-                        onClick={() => { setPanelOpen(false); setEditChecklist(cl) }}
-                        title="Modifier"
-                        aria-label="Modifier la checklist"
-                      >
-                        <FontAwesomeIcon icon={faPen} />
-                      </button>
-                      <button
-                        className="cl-action-btn cl-action-delete"
-                        onClick={() => handleDelete(cl)}
-                        title="Supprimer"
-                        aria-label="Supprimer la checklist"
-                      >
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
+                      {canEditChecklist(cl) && (
+                        <button
+                          className="cl-action-btn cl-action-edit"
+                          onClick={() => { setPanelOpen(false); setEditChecklist(cl) }}
+                          title="Modifier"
+                          aria-label="Modifier la checklist"
+                        >
+                          <FontAwesomeIcon icon={faPen} />
+                        </button>
+                      )}
+                      {canDeleteChecklist(cl) && (
+                        <button
+                          className="cl-action-btn cl-action-delete"
+                          onClick={() => handleDelete(cl)}
+                          title="Supprimer"
+                          aria-label="Supprimer la checklist"
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

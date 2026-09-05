@@ -51,6 +51,11 @@ class User extends Authenticatable
 
     public function hasPermission(string $key): bool
     {
+        // Bypass automatique pour l'administrateur
+        if ($this->role && $this->role->name === 'Admin') {
+            return true;
+        }
+
         return $this->permissions()->where('key', $key)->exists();
     }
 }

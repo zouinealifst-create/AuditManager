@@ -21,7 +21,11 @@ class ChecklistController extends Controller
             'questions' => function ($q) {
                 $q->orderBy('ordre');
             }
-        ])->where('cree_par', $request->user()?->id ?? 1); // Fallback 1 sans auth
+        ]);
+
+        if (! $request->user()->hasPermission('checklists.manage_all')) {
+            $query->where('cree_par', $request->user()->id);
+        }
 
         if ($request->filled('norme_id')) {
             $query->where('norme_id', $request->input('norme_id'));
@@ -51,10 +55,6 @@ class ChecklistController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        // TODO : réactiver quand le système de login sera branché au frontend
-        // $forbidden = $this->checkRole($request);
-        // if ($forbidden) { return $forbidden; }
-
         $validated = $request->validate([
             'norme_id'      => 'required|integer|exists:normes,id',
             'titre'         => 'required|string|max:255',
@@ -62,7 +62,7 @@ class ChecklistController extends Controller
             'statut'        => 'nullable|in:brouillon,actif,archive',
         ]);
 
-        $validated['cree_par'] = $request->user()?->id ?? 1; // fallback user=1 en mode dev sans auth
+        $validated['cree_par'] = $request->user()->id;
 
         if (! isset($validated['statut'])) {
             $validated['statut'] = 'brouillon';
@@ -104,13 +104,6 @@ class ChecklistController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
-        // Vérification temporaire du rôle en ligne.
-        // À remplacer par un middleware dédié lorsque Dev 1 livrera le système de permissions.
-        $forbidden = $this->checkRole($request);
-        if ($forbidden) {
-            return $forbidden;
-        }
-
         $checklist = Checklist::find($id);
 
         if (! $checklist) {
@@ -118,6 +111,13 @@ class ChecklistController extends Controller
                 'success' => false,
                 'message' => 'Checklist non trouvée.',
             ], 404);
+        }
+
+        if ($checklist->cree_par !== $request->user()->id && ! $request->user()->hasPermission('checklists.manage_all')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous ne pouvez gérer que vos propres checklists.',
+            ], 403);
         }
 
         $validated = $request->validate([
@@ -142,13 +142,6 @@ class ChecklistController extends Controller
      */
     public function destroy(Request $request, int $id): JsonResponse
     {
-        // Vérification temporaire du rôle en ligne.
-        // À remplacer par un middleware dédié lorsque Dev 1 livrera le système de permissions.
-        $forbidden = $this->checkRole($request);
-        if ($forbidden) {
-            return $forbidden;
-        }
-
         $checklist = Checklist::find($id);
 
         if (! $checklist) {
@@ -156,6 +149,13 @@ class ChecklistController extends Controller
                 'success' => false,
                 'message' => 'Checklist non trouvée.',
             ], 404);
+        }
+
+        if ($checklist->cree_par !== $request->user()->id && ! $request->user()->hasPermission('checklists.manage_all')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous ne pouvez gérer que vos propres checklists.',
+            ], 403);
         }
 
         try {
@@ -177,25 +177,5 @@ class ChecklistController extends Controller
         ]);
     }
 
-    /**
-     * Vérification temporaire du rôle (inline).
-     * Seuls les utilisateurs « Responsable Qualité » ou « Admin » peuvent
-     * effectuer des opérations d'écriture sur les checklists.
-     *
-     * TODO : Remplacer par un middleware/policy dédié lorsque Dev 1 livrera
-     *        le système de gestion des rôles et permissions.
-     */
-    private function checkRole(Request $request): ?JsonResponse
-    {
-        $user = $request->user();
 
-        if (! $user || ! in_array($user->role?->name, ['Responsable Qualité', 'Admin'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Action non autorisée.',
-            ], 403);
-        }
-
-        return null;
-    }
 }
